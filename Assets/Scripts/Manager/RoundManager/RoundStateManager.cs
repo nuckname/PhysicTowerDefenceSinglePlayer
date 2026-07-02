@@ -1,20 +1,17 @@
-using System;
-using Unity.VisualScripting;
-using System.Collections;
-using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UI;
 
 public class RoundStateManager : MonoBehaviour
 {
+    [Header("References")]
+    public EnemySpawner enemySpawner;
+    public WaveDataSO[] rounds;
+    
+    [Header("Runtime")]
+    public int currentRoundIndex = 0;
+
     public RoundBaseState currentState;
     public RoundOverState roundOverState = new RoundOverState();
     public RoundInProgressState roundInProgressState = new RoundInProgressState();
-
-    private void Awake()
-    {
-    }
 
     void Start()
     {
@@ -24,17 +21,25 @@ public class RoundStateManager : MonoBehaviour
 
     void Update()
     {
-        currentState.UpdateState(this);
+        currentState?.UpdateState(this);
     }
 
     private void OnCollisionEnter(Collision other)
     {
-        currentState.OnCollisionEnter(this, other);
+        currentState?.OnCollisionEnter(this, other);
     }
 
     public void SwitchState(RoundBaseState roundBaseState)
     {
         currentState = roundBaseState;
         roundBaseState.EnterState(this);
+    }
+
+    public WaveDataSO GetCurrentWaveData()
+    {
+        if (currentRoundIndex < rounds.Length)
+            return rounds[currentRoundIndex];
+        
+        return null;
     }
 }
