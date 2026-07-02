@@ -15,4 +15,4 @@ MonoBehaviour:
   roundIndex: 5
   enemyPrefab: {fileID: 3257587301196558844, guid: e9469798c5ae12f4685d6627f6ecda8e, type: 3}
   totalEnemiesToSpawn: 8
-  timeBetweenSpawns: 1.3
+  timeBetweenSpawns: 5

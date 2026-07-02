@@ -51,10 +51,11 @@ public class EnemySpawner : MonoBehaviour
         EnemyHealth enemyHealth = enemyInstance.GetComponent<EnemyHealth>();
         if (enemyHealth != null)
         {
-           // enemyHealth.OnDeath += HandleEnemyDestroyed;
+           enemyHealth.OnDeath += HandleEnemyDestroyed;
         }
     }
 
+    // Should do this in FSM
     public void HandleEnemyDestroyed()
     {
         _activeEnemiesCount--;
