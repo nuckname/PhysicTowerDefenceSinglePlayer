@@ -5,16 +5,20 @@ using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.UI;
-using UnityEngine.InputSystem; // 1. ADDED NAMESPACE
+using UnityEngine.InputSystem; 
 
 // https://www.youtube.com/watch?v=I1dAZuWurw4
 // https://github.com/mixandjam/balatro-feel
 
 public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IPointerUpHandler, IPointerDownHandler
 {
+    [Header("Card Data")]
+    public TurretCard CardData; // The actual stats/upgrade this UI card represents
+    
     private Image _imageComponent;
     [SerializeField] private bool instantiateVisual = true;
     private VisualCardsHandler _visualHandler;
+    private Camera _mainCamera; // Added to handle 3D Raycasting
     
     private Vector3 offset; 
 
@@ -59,6 +63,7 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     {
         _imageComponent = GetComponent<Image>();
         _visualHandler = GameObject.FindGameObjectWithTag("VisualCardHandler").GetComponent<VisualCardsHandler>();
+        _mainCamera = FindAnyObjectByType<Camera>(); // Cache the camera for the raycast
     }
 
     void Start()
@@ -67,23 +72,25 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             return;
 
         cardAnimator = Instantiate(cardVisualPrefab, _visualHandler.transform).GetComponent<CardAnimator>();
-        
         cardAnimator.Initialize(this);
     }
 
-    // Forces the card into a drag state programmatically
+    // Call this right after spawning the card to give it its data and artwork
+    public void InitializeCardData(TurretCard data)
+    {
+        CardData = data;
+        if (_imageComponent != null && data.CardArtwork != null)
+        {
+            _imageComponent.sprite = data.CardArtwork;
+        }
+    }
+
     public void ForceStartDrag()
     {
-        // Tell HorizontalCardHolder to set this as the selected card
         BeginDragEvent.Invoke(this); 
-        
-        // Center the card directly on the mouse
         offset = Vector3.zero; 
-        
         isDragging = true;
         wasDragged = true;
-        
-        // Prevent the card from blocking raycasts while dragging
         _imageComponent.raycastTarget = false; 
     }
 
@@ -93,89 +100,62 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
         if (isDragging)
         {
-            // MOVE MOVEMENT LOGIC HERE: Since the EventSystem won't fire OnDrag 
-            // automatically when forced, we update the position in Update()
             if (!isPreviewingInWorld)
             {
-                // 2. NEW INPUT SYSTEM
                 Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
                 transform.position = pointerPosition - offset;
             }
 
             HandlePlayAreaTransition();
 
-            // MANUAL DROP DETECTION: Listen for the mouse release manually
-            // 3. NEW INPUT SYSTEM
             if (Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
             {
-                OnEndDrag(null); // Passing null is perfectly safe here
+                OnEndDrag(null); 
             }
         }
     }
 
-// UPDATE OnDrag: You can completely empty out OnDrag since we moved 
-    // the movement logic into Update(), but keep the interface method so Unity doesn't complain.
-    public void OnDrag(PointerEventData eventData) 
-    { 
-        // Logic moved to Update() to support both UI dragging and programmatic dragging
-    }
+    public void OnDrag(PointerEventData eventData) { }
 
-    // Toggles the card's visual state when dragged in or out of the designated play area.
     private void HandlePlayAreaTransition()
     {
-        // 4. NEW INPUT SYSTEM
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
         bool isMouseInPlayArea = pointerPosition.y > playAreaThresholdY;
 
         if (isMouseInPlayArea && !isPreviewingInWorld)
         {
-            // TRANSITION TO WORLD
             isPreviewingInWorld = true;
-            
             _imageComponent.enabled = false;
             cardAnimator.gameObject.SetActive(false);
-
             OnEnterPlayArea?.Invoke();
         }
         else if (!isMouseInPlayArea && isPreviewingInWorld)
         {
-            // TRANSITION BACK TO HAND
             isPreviewingInWorld = false;
-
             _imageComponent.enabled = true;
             cardAnimator.gameObject.SetActive(true);
-
             OnExitPlayArea?.Invoke();
         }
     }
 
-    // Prevents the UI card from being dragged outside the edges of the screen.
     void ClampPosition()
     {
         Vector3 clampedPosition = transform.position;
-        
         clampedPosition.x = Mathf.Clamp(clampedPosition.x, 0, Screen.width);
         clampedPosition.y = Mathf.Clamp(clampedPosition.y, 0, Screen.height);
-        
         transform.position = clampedPosition;
     }
 
-    // Triggers drag events, calculates the grab offset.
     public void OnBeginDrag(PointerEventData eventData)
     {
         BeginDragEvent.Invoke(this);
-        
-        // 5. NEW INPUT SYSTEM
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
         offset = pointerPosition - transform.position;
         isDragging = true;
-        
         _imageComponent.raycastTarget = false;
-
         wasDragged = true;
     }
 
-    // Fires drop events and resolves placement based on whether the card is in the play area.
     public void OnEndDrag(PointerEventData eventData)
     {
         isDragging = false;
@@ -184,11 +164,12 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             EndDragEvent.Invoke(this);
             OnDropInPlayArea?.Invoke();
+            
+            // 1. We dropped the card in the world! Let's see if we hit a turret.
+            AttemptPlayOnTurret();
         }
         else
         {
-            // NEW: If this is a floating card pulled from the world, it needs a slot 
-            // BEFORE we fire EndDragEvent so the DOLocalMove animation targets the slot center!
             if (transform.parent != null && !transform.parent.CompareTag("Slot") && HorizontalCardHolder.Instance != null)
             {
                 HorizontalCardHolder.Instance.AssignSlotToCard(this);
@@ -199,31 +180,65 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
     }
 
-    // Cancels the play preview and restores the card's UI visuals in the hand.
+    // 2. The core logic for checking the 3D world beneath the mouse
+    private void AttemptPlayOnTurret()
+    {
+        if (CardData == null)
+        {
+            Debug.LogWarning("Card dropped, but it has no CardData assigned!");
+            ReturnToHand();
+            return;
+        }
+
+        Vector2 mousePosition = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
+        Ray ray = _mainCamera.ScreenPointToRay(mousePosition);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+        {
+            if (hit.collider.CompareTag("Turret"))
+            {
+                Turret targetTurret = hit.collider.GetComponent<Turret>();
+
+                if (targetTurret != null)
+                {
+                    Debug.Log($"Dropped {CardData.CardName} onto {targetTurret.gameObject.name}!");
+                    
+                    // Add the card to the turret's pending inventory
+                    targetTurret.AddCardToInventory(CardData);
+                    
+                    // The play was successful, destroy the UI card
+                    SuccessfulPlay();
+                    return; 
+                }
+            }
+        }
+
+        // If we missed the turret, or clicked the ground, bounce back to the hand
+        Debug.Log("Missed the turret. Returning to hand.");
+        ReturnToHand();
+    }
+
     public void ReturnToHand()
     {
-        Debug.Log("CardMovement REutnr to hand");
-        // FAILED TO PLACE (Cell occupied or invalid) - Return to Hand
+        Debug.Log("CardMovement Return to hand");
         isPreviewingInWorld = false;
 
         _imageComponent.enabled = true;
         if (cardAnimator != null) 
             cardAnimator.gameObject.SetActive(true);
 
-        // RETURNED TO HAND
         _imageComponent.raycastTarget = true;
 
         StartCoroutine(FrameWait());
     }
 
-    // Waits for the end of the frame to reset the dragged state flag.
     private IEnumerator FrameWait()
     {
         yield return new WaitForEndOfFrame();
         wasDragged = false;
     }
 
-    // Cleans up the card and its container slot after being successfully played.
     public void SuccessfulPlay()
     {
         if (HorizontalCardHolder.Instance != null)
@@ -231,14 +246,12 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             HorizontalCardHolder.Instance.cardsInHand.Remove(this);
         }
 
-        // Instantly unparent the slot so childCount updates immediately
         if (transform.parent != null && transform.parent.CompareTag("Slot"))
         {
             transform.parent.SetParent(null);
             Destroy(transform.parent.gameObject);
         }
         
-        // Tell the manager to update the visuals for the REMAINING cards
         if (HorizontalCardHolder.Instance != null)
         {
             HorizontalCardHolder.Instance.RebuildHandVisuals();
@@ -247,50 +260,35 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Destroy(gameObject);
     }
 
-    // Fires the enter event and marks the card as hovering.
     public void OnPointerEnter(PointerEventData eventData)
     {
         PointerEnterEvent.Invoke(this);
         isHovering = true;
     }
 
-    // Fires the exit event and removes the hovering state.
     public void OnPointerExit(PointerEventData eventData)
     {
         PointerExitEvent.Invoke(this);
         isHovering = false;
     }
 
-    // Select a card
-    // Records the start time of a left mouse click for tap vs. drag detection.
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left)
-        {
-            Debug.LogError("returned");
-            return;
-        }
+        if (eventData.button != PointerEventData.InputButton.Left) return;
 
         PointerDownEvent.Invoke(this);
         _pointerDownTime = Time.time;
     }
 
-    // Placing pin
-    // Determines if a click was a quick tap to toggle selection and fires relevant events.
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left)
-            return;
+        if (eventData.button != PointerEventData.InputButton.Left) return;
 
         _pointerUpTime = Time.time;
-
         PointerUpEvent.Invoke(this, _pointerUpTime - _pointerDownTime > .2f);
 
-        if (_pointerUpTime - _pointerDownTime > .2f)
-            return;
-
-        if (wasDragged)
-            return;
+        if (_pointerUpTime - _pointerDownTime > .2f) return;
+        if (wasDragged) return;
 
         selected = !selected;
         SelectEvent.Invoke(this, selected);
@@ -301,7 +299,6 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             transform.localPosition = Vector3.zero;
     }
 
-    // Forces the card out of its selected state and resets its local position.
     public void Deselect()
     {
         if (selected)
@@ -311,25 +308,21 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
     }
 
-    // Returns the total number of sibling slots in the parent container.
     public int SiblingAmount()
     {
         return transform.parent != null && transform.parent.parent != null && transform.parent.CompareTag("Slot") ? transform.parent.parent.childCount - 1 : 0;
     }
 
-    // Gets the current index of this card's UI slot within its parent container.
     public int ParentIndex()
     {
         return transform.parent != null && transform.parent.CompareTag("Slot") ? transform.parent.GetSiblingIndex() : 0;
     }
 
-    // Calculates the card's relative position (0.0 to 1.0) within the hand.
     public float NormalizedPosition()
     {
         return transform.parent != null && transform.parent.parent != null && transform.parent.CompareTag("Slot") ? ExtensionMethods.Remap((float)ParentIndex(), 0, (float)(transform.parent.parent.childCount - 1), 0, 1) : 0;
     }
 
-    // Cleans up the linked visual animator object when this card is destroyed.
     private void OnDestroy()
     {
         if(cardAnimator != null)

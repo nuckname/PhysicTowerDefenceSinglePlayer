@@ -152,7 +152,7 @@ MonoBehaviour:
   selectionOffset: 25
   cardVisualPrefab: {fileID: 7310339964073049012, guid: b5837f97d682eb74bb8953b1fda99491, type: 3}
   cardAnimator: {fileID: 0}
-  playAreaThresholdY: 500
+  playAreaThresholdY: 150
   isPreviewingInWorld: 0
   isHovering: 0
   isDragging: 0
