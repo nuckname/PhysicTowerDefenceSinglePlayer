@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Laser Card", menuName = "Grid System/Cards/Laser Upgrade")]
@@ -6,7 +7,7 @@ public class LaserCard : TurretCard
     [Header("Laser Specifics")]
     public int DamagePerSquare = 5;
 
-    public override int CalculateEffect(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, int gridWidth, int gridHeight)
+    public override List<StatModifier> CalculateEffect(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, int gridWidth, int gridHeight)
     {
         int squaresTraveled = 0;
         Vector2Int currentPos = startPos + direction;
@@ -20,6 +21,17 @@ public class LaserCard : TurretCard
             squaresTraveled++;
             currentPos += direction; 
         }
-        return BaseDamage + (squaresTraveled * DamagePerSquare);
+        
+        int calculatedDamageBonus = BaseDamage + (squaresTraveled * DamagePerSquare);
+
+        List<StatModifier> modifiers = new List<StatModifier>();
+        
+        modifiers.Add(new StatModifier 
+        { 
+            Type = StatType.Damage, 
+            Value = calculatedDamageBonus 
+        });
+
+        return modifiers;
     }
 }

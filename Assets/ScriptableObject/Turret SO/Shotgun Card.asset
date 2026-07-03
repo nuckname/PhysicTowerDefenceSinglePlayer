@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0648c737b621644408ff3fb80ff98e6d, type: 3}
   m_Name: Shotgun Card
   m_EditorClassIdentifier: Assembly-CSharp::ShotgunCard
-  CardName: 
+  CardName: Shot gun
   CardArtwork: {fileID: 0}
   BaseDamage: 10
   FalloffPerSquare: 2

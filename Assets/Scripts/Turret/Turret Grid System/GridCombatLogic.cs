@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GridCombatLogic : MonoBehaviour
@@ -18,8 +19,8 @@ public class GridCombatLogic : MonoBehaviour
         // need to run correct grid size here.
         Debug.LogWarning("GridCombatLogic: ApplyCardToTurret called. Make sure to pass the correct grid size for your game.");
         
-        // The card now returns a bundle of stats instead of just an int
-        TurretStats cardModifiers = playedCard.CalculateEffect(startPos, direction, gridData, 5, 5);
+        // The card now returns a List of dynamic stat modifiers instead of a rigid struct
+        List<StatModifier> cardModifiers = playedCard.CalculateEffect(startPos, direction, gridData, 5, 5);
         
         // Tell the turret to deal that damage to an enemy... 
         // (We do this by sending the modifiers to the Turret script)

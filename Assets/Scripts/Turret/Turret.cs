@@ -1,15 +1,14 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Turret : MonoBehaviour
 {
-    [Header("Base Targeting Attributes")]
-    public float baseRange = 15f;
+    [Header("Targeting Attributes")]
     public string enemyTag = "Enemy";
 
-    [Header("Base Shooting Attributes")]
-    public float baseFireRate = 1f;
-    public int baseDamage = 10; // Added base damage
-    private float _fireCountdown = 0f;
+    [Header("Dynamic Stats")]
+    // Configure this in the Inspector! Add Damage, Range, FireRate, etc.
+    public List<TurretStat> Stats = new List<TurretStat>();
 
     [Header("References")]
     public Transform partToRotate;
@@ -19,31 +18,63 @@ public class Turret : MonoBehaviour
     
     // Runtime variables
     private Transform _target;
-    
-    // The actual stats used in gameplay
-    [HideInInspector] public float currentRange;
-    [HideInInspector] public float currentFireRate;
-    [HideInInspector] public int currentDamage;
+    private float _fireCountdown = 0f;
+
+    [Header("Pending Inventory")]
+    // Cards sitting in the turret, waiting to be placed on the grid
+    public List<TurretCard> PendingCards = new List<TurretCard>();
+
 
     private void Start()
     {
-        // Initialize current stats to match base stats on spawn
-        currentRange = baseRange;
-        currentFireRate = baseFireRate;
-        currentDamage = baseDamage;
+        // Initialize all stats to their base values
+        foreach (var stat in Stats)
+        {
+            stat.CurrentValue = stat.BaseValue;
+        }
 
         // Call UpdateTarget twice a second instead of every frame to save performance
         InvokeRepeating(nameof(UpdateTarget), 0f, 0.5f);
     }
 
-    // NEW METHOD: Called by GridCombatLogic when the grid changes
-    public void UpdateModifiers(TurretStats modifiers)
+    public void UpdateModifiers(List<StatModifier> incomingModifiers)
     {
-        // Always calculate off the base stat so we don't stack infinitely
-        currentRange = baseRange + modifiers.RangeBonus;
-        currentFireRate = baseFireRate + modifiers.FireRateBonus;
-        currentDamage = baseDamage + modifiers.DamageBonus;
+        // 1. Reset everything back to base before applying new grid calculations
+        // Not sure if we need this
+        foreach (var stat in Stats)
+        {
+            Debug.Log("Reset everything to base before applying new grid calculations");
+            stat.CurrentValue = stat.BaseValue;
+        }
+
+        // 2. Loop through every modifier handed to us by the grid
+        foreach (var mod in incomingModifiers)
+        {
+            // 3. Find the matching stat on the turret and add the value
+            TurretStat matchingStat = Stats.Find(s => s.Type == mod.Type);
+            if (matchingStat != null)
+            {
+                matchingStat.CurrentValue += mod.Value;
+            }
+        }
     }
+
+    // Helper method to easily grab a current stat anywhere else in the script
+    public float GetStat(StatType type)
+    {
+        TurretStat matchingStat = Stats.Find(s => s.Type == type);
+        return matchingStat != null ? matchingStat.CurrentValue : 0f;
+    }
+    
+    public void AddCardToInventory(TurretCard card)
+    {
+        if (!PendingCards.Contains(card))
+        {
+            PendingCards.Add(card);
+            Debug.Log($"{card.CardName} added to turret inventory!");
+        }
+    }
+
 
     private void UpdateTarget()
     {
@@ -70,8 +101,9 @@ public class Turret : MonoBehaviour
             }
         }
 
+        float currentRange = GetStat(StatType.Range);
+
         // If an enemy is found and is within our range, set it as the target
-        // NOTE: Updated to use 'currentRange' instead of 'range'
         if (nearestEnemy != null && shortestDistance <= currentRange)
         {
             _target = nearestEnemy.transform;
@@ -99,8 +131,10 @@ public class Turret : MonoBehaviour
         if (_fireCountdown <= 0f)
         {
             Shoot();
-            // NOTE: Updated to use 'currentFireRate' instead of 'fireRate'
-            _fireCountdown = 1f / currentFireRate;
+            
+            float currentFireRate = GetStat(StatType.FireRate);
+            // Prevent division by zero if fire rate is 0
+            _fireCountdown = currentFireRate > 0 ? 1f / currentFireRate : 1f;
         }
 
         _fireCountdown -= Time.deltaTime;
@@ -116,9 +150,8 @@ public class Turret : MonoBehaviour
         if (bullet != null)
         {
             bullet.Seek(_target);
-            
-            // NOTE: You will need to add a method to your Bullet script to receive currentDamage!
-            // Example: bullet.SetDamage(currentDamage);
+            // NOTE: Pass the calculated damage to the bullet here if your Bullet script supports it
+            // Example: bullet.SetDamage(GetStat(StatType.Damage));
         }
     }
 
@@ -126,7 +159,9 @@ public class Turret : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        // NOTE: Updated to show the modified range in the editor if playing, otherwise base range
-        Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? currentRange : baseRange);
+        
+        // If the game is running, show the modified range, otherwise default to a preview or 0
+        float rangeToShow = Application.isPlaying ? GetStat(StatType.Range) : 15f; 
+        Gizmos.DrawWireSphere(transform.position, rangeToShow);
     }
 }
