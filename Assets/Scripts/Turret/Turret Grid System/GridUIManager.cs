@@ -3,25 +3,44 @@ using UnityEngine;
 
 public class GridUIManager : MonoBehaviour 
 {
-    public static GridUIManager Instance;
-
     [SerializeField] private int _width, _height;
     [SerializeField] private Tile _tilePrefab;
     [SerializeField] private Transform _gridParent; // e.g., a Canvas Panel with a GridLayoutGroup
 
     private Dictionary<Vector2Int, Tile> _uiTiles;
-    private Turret _currentActiveTurret;
 
     [Header("Grid Layout Settings")]
     [SerializeField] private float _tileSize = 100f; // The width/height of your UI Image
     [SerializeField] private Vector2 _gridOffset; // Manual tweak to shift the whole grid
     
-    void Awake() 
+    // We remove the Awake/Instance setup. 
+    // This is now called right after we Instantiate the prefab.
+    public void InitializeAndLoadGrid(TurretGridData MyGridData) 
     {
-        Instance = this;
+        GenerateUIGrid();
+
+        // Safety check
+        if (MyGridData == null || MyGridData.TileStates == null) return;
+
+        // Loop through the UI tiles and update them based on the saved data
+        foreach (var kvp in _uiTiles)
+        {
+            Vector2Int pos = kvp.Key;
+            Tile tileUI = kvp.Value;
+            
+            // Check if the turret has data for this position
+            if (MyGridData.TileStates.TryGetValue(pos, out int stateValue))
+            {
+                tileUI.SetState(stateValue);
+            }
+            else
+            {
+                tileUI.ResetState();
+            }
+        }
     }
 
-    void GenerateUIGrid() 
+    private void GenerateUIGrid() 
     {
         _uiTiles = new Dictionary<Vector2Int, Tile>();
 
@@ -53,31 +72,10 @@ public class GridUIManager : MonoBehaviour
             }
         }
     }
-
-    // Called when a turret is clicked
-    public void LoadTurretGrid(TurretGridData MyGridData) 
+    
+    // Add a quick way to destroy the canvas when the player closes it
+    public void CloseGrid()
     {
-        // This is temp as we should have already generated a grid before we have spawned a turret.
-        if (_uiTiles == null || _uiTiles.Count == 0)
-        {
-            GenerateUIGrid();
-        }
-        
-        // Loop through the UI tiles and update them based on the saved data
-        foreach (var kvp in _uiTiles)
-        {
-            Vector2Int pos = kvp.Key;
-            Tile tileUI = kvp.Value;
-            
-            // Check if the turret has data for this position
-            if (MyGridData.TileStates.TryGetValue(pos, out int stateValue))
-            {
-                // Update UI visually based on the stateValue (e.g., show an item, change color)
-            }
-            else
-            {
-                // Reset UI to empty/default state
-            }
-        }
+        Destroy(gameObject);
     }
 }

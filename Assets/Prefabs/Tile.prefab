@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f43aba8d42c32de47b9c61b55b66d6bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tile
-  _baseColor: {r: 1, g: 1, b: 1, a: 1}
-  _offsetColor: {r: 0.6981132, g: 0.6981132, b: 0.6981132, a: 1}
-  _renderer: {fileID: 6344033205240712747}
-  _highlight: {fileID: 3227386200180152141, guid: 34597d626c576e5429f1898017b5fddd, type: 3}
+  _tileImage: {fileID: 6344033205240712747}
+  _defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  _occupiedColor: {r: 0, g: 1, b: 0, a: 1}
+  _blockedColor: {r: 1, g: 0, b: 0, a: 1}

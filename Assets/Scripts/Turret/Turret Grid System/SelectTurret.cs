@@ -5,6 +5,10 @@ using UnityEngine.InputSystem;
 
 public class SelectTurret : MonoBehaviour
 {
+    [Header("UI Spawning")]
+    [SerializeField] private GridUIManager _canvasPrefab; // Drag your new Canvas Prefab here
+    private GridUIManager _activeCanvasInstance; // Keeps track of the currently open grid
+
     private Camera _mainCamera;
     
     private void Awake()
@@ -39,16 +43,31 @@ public class SelectTurret : MonoBehaviour
             if (hit.collider.CompareTag("Turret"))
             {
                 Turret clickedTurret = hit.collider.GetComponent<Turret>();
+                TurretGridManager clickedTurretsGrid = hit.collider.GetComponent<TurretGridManager>();
 
-                if (clickedTurret != null)
+                if (clickedTurret != null && clickedTurretsGrid != null)
                 {
                     Debug.Log($"Turret Selected: {clickedTurret.gameObject.name}");
-                    TurretGridManager clickedTurretsGrid = clickedTurret.GetComponent<TurretGridManager>();
-                    
-                    if (GridUIManager.Instance != null)
+
+                    // 1. If a grid is already open, destroy it so we don't overlap canvases
+                    if (_activeCanvasInstance != null)
                     {
-                        GridUIManager.Instance.LoadTurretGrid(clickedTurretsGrid.MyGridData);
+                        Destroy(_activeCanvasInstance.gameObject);
                     }
+
+                    // 2. Spawn the new Canvas
+                    _activeCanvasInstance = Instantiate(_canvasPrefab);
+
+                    // 3. Tell the spawned canvas to generate and load the specific turret's data
+                    _activeCanvasInstance.InitializeAndLoadGrid(clickedTurretsGrid.MyGridData);
+                }
+            }
+            else 
+            {
+                // Optional: If you click the ground/empty space, close the active grid
+                if (_activeCanvasInstance != null)
+                {
+                    Destroy(_activeCanvasInstance.gameObject);
                 }
             }
         }
