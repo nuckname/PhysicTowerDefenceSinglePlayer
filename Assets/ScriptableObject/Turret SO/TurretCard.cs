@@ -10,5 +10,5 @@ public abstract class TurretCard : ScriptableObject
 
     // By making this abstract, we force EVERY child card to write its own custom math, 
     // while guaranteeing to the rest of the game that this method will always exist.
-    public abstract int CalculateEffect(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, int gridWidth, int gridHeight);
+    public abstract TurretStats CalculateEffect(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, int gridWidth, int gridHeight);
 }

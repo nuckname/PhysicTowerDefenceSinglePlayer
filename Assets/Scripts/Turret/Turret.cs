@@ -2,12 +2,13 @@ using UnityEngine;
 
 public class Turret : MonoBehaviour
 {
-    [Header("Targeting Attributes")]
-    public float range = 15f;
+    [Header("Base Targeting Attributes")]
+    public float baseRange = 15f;
     public string enemyTag = "Enemy";
 
-    [Header("Shooting Attributes")]
-    public float fireRate = 1f;
+    [Header("Base Shooting Attributes")]
+    public float baseFireRate = 1f;
+    public int baseDamage = 10; // Added base damage
     private float _fireCountdown = 0f;
 
     [Header("References")]
@@ -16,14 +17,32 @@ public class Turret : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform firePoint;
     
-    
     // Runtime variables
     private Transform _target;
+    
+    // The actual stats used in gameplay
+    [HideInInspector] public float currentRange;
+    [HideInInspector] public float currentFireRate;
+    [HideInInspector] public int currentDamage;
 
     private void Start()
     {
+        // Initialize current stats to match base stats on spawn
+        currentRange = baseRange;
+        currentFireRate = baseFireRate;
+        currentDamage = baseDamage;
+
         // Call UpdateTarget twice a second instead of every frame to save performance
         InvokeRepeating(nameof(UpdateTarget), 0f, 0.5f);
+    }
+
+    // NEW METHOD: Called by GridCombatLogic when the grid changes
+    public void UpdateModifiers(TurretStats modifiers)
+    {
+        // Always calculate off the base stat so we don't stack infinitely
+        currentRange = baseRange + modifiers.RangeBonus;
+        currentFireRate = baseFireRate + modifiers.FireRateBonus;
+        currentDamage = baseDamage + modifiers.DamageBonus;
     }
 
     private void UpdateTarget()
@@ -52,7 +71,8 @@ public class Turret : MonoBehaviour
         }
 
         // If an enemy is found and is within our range, set it as the target
-        if (nearestEnemy != null && shortestDistance <= range)
+        // NOTE: Updated to use 'currentRange' instead of 'range'
+        if (nearestEnemy != null && shortestDistance <= currentRange)
         {
             _target = nearestEnemy.transform;
         }
@@ -79,7 +99,8 @@ public class Turret : MonoBehaviour
         if (_fireCountdown <= 0f)
         {
             Shoot();
-            _fireCountdown = 1f / fireRate;
+            // NOTE: Updated to use 'currentFireRate' instead of 'fireRate'
+            _fireCountdown = 1f / currentFireRate;
         }
 
         _fireCountdown -= Time.deltaTime;
@@ -95,6 +116,9 @@ public class Turret : MonoBehaviour
         if (bullet != null)
         {
             bullet.Seek(_target);
+            
+            // NOTE: You will need to add a method to your Bullet script to receive currentDamage!
+            // Example: bullet.SetDamage(currentDamage);
         }
     }
 
@@ -102,8 +126,7 @@ public class Turret : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, range);
+        // NOTE: Updated to show the modified range in the editor if playing, otherwise base range
+        Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? currentRange : baseRange);
     }
-    
-
 }

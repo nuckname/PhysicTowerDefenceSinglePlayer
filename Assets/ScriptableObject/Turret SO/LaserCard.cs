@@ -20,7 +20,6 @@ public class LaserCard : TurretCard
             squaresTraveled++;
             currentPos += direction; 
         }
-
         return BaseDamage + (squaresTraveled * DamagePerSquare);
     }
 }
