@@ -15,7 +15,8 @@ public class Turret : MonoBehaviour
     public float turnSpeed = 10f;
     public GameObject bulletPrefab;
     public Transform firePoint;
-
+    
+    
     // Runtime variables
     private Transform _target;
 
@@ -103,4 +104,6 @@ public class Turret : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, range);
     }
+    
+
 }
