@@ -59,9 +59,7 @@ public class HorizontalCardHolder : MonoBehaviour
             // Instantiate slot
             GameObject newSlot = Instantiate(slotPrefab, transform);
             
-            // Instantiate card inside slot
-            //GameObject newCardObj = Instantiate(cardPrefab, newSlot.transform);
-            CardMovement newCardMovement = newSlot.GetComponent<CardMovement>();
+            CardMovement newCardMovement = newSlot.GetComponentInChildren<CardMovement>();
 
             if (newCardMovement != null)
             {
