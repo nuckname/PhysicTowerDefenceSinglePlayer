@@ -108,9 +108,19 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
             HandlePlayAreaTransition();
 
+            // We must manually pass null or recreate event data here for custom forced drops
             if (Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame)
             {
-                OnEndDrag(null); 
+                // To be safe with UI raycasts, we let the real OnEndDrag handle this naturally,
+                // but if forced, we trigger it.
+                if (isDragging) 
+                {
+                    PointerEventData pointerData = new PointerEventData(EventSystem.current)
+                    {
+                        position = Pointer.current.position.ReadValue()
+                    };
+                    OnEndDrag(pointerData); 
+                }
             }
         }
     }
@@ -119,6 +129,13 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     private void HandlePlayAreaTransition()
     {
+        // NEW: If a Turret Grid is currently open, we don't want the card turning invisible 
+        // while we are dragging it up to place it on the UI grid!
+        if (FindAnyObjectByType<GridUIManager>() != null)
+        {
+            return; 
+        }
+
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
         bool isMouseInPlayArea = pointerPosition.y > playAreaThresholdY;
 
@@ -158,18 +175,28 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (!isDragging) return;
         isDragging = false;
+
+        // 1. Try dropping on the UI Grid FIRST
+        if (AttemptPlayOnGrid(eventData))
+        {
+            EndDragEvent.Invoke(this);
+            return; // Successfully placed on the grid, stop here!
+        }
         
+        // 2. Try dropping in the 3D World (Turret Phase 1)
         if (isPreviewingInWorld)
         {
             EndDragEvent.Invoke(this);
             OnDropInPlayArea?.Invoke();
             
-            // 1. We dropped the card in the world! Let's see if we hit a turret.
+            // We dropped the card in the world! Let's see if we hit a turret.
             AttemptPlayOnTurret();
         }
         else
         {
+            // 3. Missed everything, return to hand
             if (transform.parent != null && !transform.parent.CompareTag("Slot") && HorizontalCardHolder.Instance != null)
             {
                 HorizontalCardHolder.Instance.AssignSlotToCard(this);
@@ -178,6 +205,40 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             EndDragEvent.Invoke(this);
             ReturnToHand();
         }
+    }
+
+    // ==========================================
+    // NEW: The core logic for checking the UI Grid beneath the mouse
+    // ==========================================
+    private bool AttemptPlayOnGrid(PointerEventData eventData)
+    {
+        if (eventData == null || CardData == null) return false;
+
+        // Fire a raycast through all UI elements under the mouse
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        foreach (RaycastResult result in results)
+        {
+            // Check if we hit a specific UI Tile
+            Tile hitTile = result.gameObject.GetComponent<Tile>();
+            if (hitTile != null)
+            {
+                GridUIManager gridManager = FindAnyObjectByType<GridUIManager>();
+                if (gridManager != null)
+                {
+                    // NOTE: You will need a public getter for the Position in your Tile.cs
+                    // Example: hitTile.GridPosition
+                    gridManager.PlaceCardOnGrid(CardData, hitTile.Position); // <-- Ensure Tile.cs has "Position"
+                    
+                    Debug.Log($"Dropped {CardData.CardName} onto UI Grid!");
+                    SuccessfulPlay();
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     // 2. The core logic for checking the 3D world beneath the mouse

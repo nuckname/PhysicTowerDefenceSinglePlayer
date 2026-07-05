@@ -14,13 +14,13 @@ public class Tile : MonoBehaviour
     [SerializeField] private Color _blockedColor = Color.red;
     
     // Add a reference to know where this tile is on the grid
-    public Vector2Int GridPosition { get; private set; }
+    public Vector2Int Position { get; private set; }
     
     private bool _isOffset; // Store this tile's offset state
 
     public void Init(bool isOffset, Vector2Int gridPos) 
     {
-        GridPosition = gridPos;
+        Position = gridPos;
         _isOffset = isOffset;
         
         // Apply the correct base color immediately when spawned
