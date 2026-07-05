@@ -16,10 +16,16 @@ public class GridUIManager : MonoBehaviour
     [Header("Inventory Setup")]
     public HorizontalCardHolder inventoryCardHolder;
 
+    [Header("Entity Management")]
+    [SerializeField] private GridEntity _entityPrefab; // Drag your new Grid Entity UI Prefab here
+    private List<GridEntity> _activeEntities = new List<GridEntity>(); // Keeps track of what is on the board
+    private TurretGridData _currentGridData; // Cache this so we can pass it to the cards
+
     // We remove the Awake/Instance setup. 
     // This is now called right after we Instantiate the prefab.
     public void InitializeAndLoadGrid(TurretGridData MyGridData, List<TurretCard> pendingCards) 
     {
+        _currentGridData = MyGridData; // Cache the data
         GenerateUIGrid();
 
         if (inventoryCardHolder != null)
@@ -79,5 +85,62 @@ public class GridUIManager : MonoBehaviour
                 _uiTiles[pos] = spawnedTile;
             }
         }
+    }
+
+    // ==========================================
+    // NEW ENTITY & MATH LOGIC
+    // ==========================================
+
+    /// <summary>
+    /// Call this when the player drops a card from their hand onto a valid tile.
+    /// </summary>
+    public void PlaceCardOnGrid(TurretCard cardData, Vector2Int gridPosition)
+    {
+        // 1. Double check the tile exists
+        if (!_uiTiles.ContainsKey(gridPosition)) return;
+
+        Tile targetTile = _uiTiles[gridPosition];
+
+        // 2. Spawn the entity as a child of the tile so it perfectly overlaps
+        GridEntity newEntity = Instantiate(_entityPrefab, targetTile.transform);
+        
+        // 3. Initialize its data
+        newEntity.Initialize(cardData, gridPosition, this);
+        
+        // 4. Add it to our tracking list
+        _activeEntities.Add(newEntity);
+
+        // 5. Run the math!
+        RecalculateBoard();
+    }
+
+    /// <summary>
+    /// The master math function. Wipes the slate clean and asks every piece to recalculate.
+    /// </summary>
+    public void RecalculateBoard()
+    {
+        List<StatModifier> allCalculatedModifiers = new List<StatModifier>();
+
+        foreach (GridEntity entity in _activeEntities)
+        {
+            // Call the abstract CalculateEffect on the ScriptableObject
+            List<StatModifier> pieceModifiers = entity.MyCardData.CalculateEffect(
+                entity.CurrentGridPosition, 
+                entity.CurrentDirection, 
+                _currentGridData, 
+                _width, 
+                _height
+            );
+
+            // Add this piece's specific modifiers to the master list
+            if (pieceModifiers != null)
+            {
+                allCalculatedModifiers.AddRange(pieceModifiers);
+            }
+        }
+
+        // NOTE: Here is where you will eventually hand 'allCalculatedModifiers' 
+        // back to the Turret.cs script!
+        Debug.Log($"Board Recalculated! Generated {allCalculatedModifiers.Count} total modifiers.");
     }
 }
