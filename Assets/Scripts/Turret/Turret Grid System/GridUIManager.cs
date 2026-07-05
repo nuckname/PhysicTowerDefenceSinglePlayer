@@ -26,6 +26,8 @@ public class GridUIManager : MonoBehaviour
     [Header("Dependencies")]
     [SerializeField] private GridCombatLogic _combatLogic; // Drag your Turret's combat logic component here
 
+    private TurretGridData _currentGridData;
+    
     private GridCombatLogic _gridCombatLogic;
     private void Awake()
     {
@@ -41,6 +43,8 @@ public class GridUIManager : MonoBehaviour
         {
             _combatLogic.InitializeGridLogic(MyGridData, _width, _height, myTurret);
         }
+
+        _currentGridData = MyGridData;
 
         GenerateUIGrid();
 
@@ -66,6 +70,40 @@ public class GridUIManager : MonoBehaviour
             else
             {
                 tileUI.ResetState();
+            }
+        }
+
+        LoadSavedBoardState();
+    }
+    
+    /// <summary>
+    /// Reads the saved data from the turret and automatically repopulates the visual UI board.
+    /// </summary>
+    private void LoadSavedBoardState()
+    {
+        if (_currentGridData == null || _currentGridData.SavedCards == null) return;
+
+        foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
+        {
+            // 1. Double check the tile still exists in the UI
+            if (!_uiTiles.ContainsKey(savedCard.GridPosition)) continue;
+
+            Tile targetTile = _uiTiles[savedCard.GridPosition];
+
+            // 2. Spawn the entity just like we do when a player drops a card
+            GridEntity loadedEntity = Instantiate(_entityPrefab, targetTile.transform);
+            
+            // 3. Initialize it with the saved data
+            loadedEntity.Initialize(savedCard.CardData, savedCard.GridPosition, this);
+            
+            // 4. Force the rotation/direction to match what was saved
+            // Assuming you add a quick setter in your GridEntity script:
+            loadedEntity.SetDirection(savedCard.Direction); 
+            
+            // 5. Register it with the combat logic
+            if (_combatLogic != null)
+            {
+                _combatLogic.RegisterEntity(loadedEntity);
             }
         }
     }
@@ -135,13 +173,4 @@ public class GridUIManager : MonoBehaviour
     {
         _gridCombatLogic.RecalculateBoard();
     }
-    
-    // /// <summary>
-    // /// The master math function. Wipes the slate clean and asks every piece to recalculate.
-    // /// </summary>
-    // MOVED TO GridCombatLogic.cs
-    
-    // NOTE: Here is where you will eventually hand 'allCalculatedModifiers' 
-    // back to the Turret.cs script!
-    // MOVED TO GridCombatLogic.cs
 }

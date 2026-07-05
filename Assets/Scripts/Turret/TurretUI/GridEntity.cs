@@ -63,12 +63,29 @@ public class GridEntity : MonoBehaviour
         else if (CurrentDirection == Vector2Int.left) CurrentDirection = Vector2Int.up;
     }
 
-    // NEW: Added counter-clockwise math for the scroll wheel up!
+    // Added counter-clockwise math for the scroll wheel up
     public void RotateDirectionCounterClockwise()
     {
         if (CurrentDirection == Vector2Int.up) CurrentDirection = Vector2Int.left;
         else if (CurrentDirection == Vector2Int.left) CurrentDirection = Vector2Int.down;
         else if (CurrentDirection == Vector2Int.down) CurrentDirection = Vector2Int.right;
         else if (CurrentDirection == Vector2Int.right) CurrentDirection = Vector2Int.up;
+    }
+    
+    public void SetDirection(Vector2Int savedDirection)
+    {
+        CurrentDirection = savedDirection;
+
+        // Apply visual rotation based on the cardinal direction vector
+        float angle = 0f;
+        if (CurrentDirection == Vector2Int.up) angle = 0f;
+        else if (CurrentDirection == Vector2Int.right) angle = -90f;
+        else if (CurrentDirection == Vector2Int.down) angle = -180f;
+        else if (CurrentDirection == Vector2Int.left) angle = 90f;
+
+        if (Artwork != null)
+        {
+            Artwork.transform.rotation = Quaternion.Euler(0, 0, angle);
+        }
     }
 }

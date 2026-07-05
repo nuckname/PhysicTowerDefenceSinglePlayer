@@ -57,8 +57,22 @@ public class GridCombatLogic : MonoBehaviour
 
         List<StatModifier> allCalculatedModifiers = new List<StatModifier>();
 
+        if (_currentGridData != null)
+        {
+            _currentGridData.SavedCards.Clear();
+        }
+        
         foreach (GridEntity entity in _activeEntities)
         {
+            if (_currentGridData != null)
+            {
+                _currentGridData.SavedCards.Add(new PlacedCardSaveState(
+                    entity.MyCardData, 
+                    entity.CurrentGridPosition, 
+                    entity.CurrentDirection
+                ));
+            }
+            
             // 2. MATH: Calculate modifiers
             List<StatModifier> pieceModifiers = entity.MyCardData.CalculateEffect(
                 entity.CurrentGridPosition, 
