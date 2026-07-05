@@ -8,9 +8,9 @@ using UnityEngine.InputSystem; // 1. ADDED NAMESPACE
 // https://www.youtube.com/watch?v=I1dAZuWurw4
 // https://github.com/mixandjam/balatro-feel
 
-
 public class HorizontalCardHolder : MonoBehaviour
 {
+    // Updated to support canvas destruction/respawning without breaking the Singleton
     public static HorizontalCardHolder Instance { get; private set; }
 
     [SerializeField] private CardMovement selectedCardMovement;
@@ -19,8 +19,7 @@ public class HorizontalCardHolder : MonoBehaviour
     [SerializeField] private GameObject slotPrefab;
     private RectTransform rect;
 
-    [Header("Spawn Settings")]
-    [SerializeField] private int cardsToSpawn = 7;
+    [Header("Current Inventory")]
     public List<CardMovement> cardsInHand;
 
     bool isCrossing = false;
@@ -28,33 +27,56 @@ public class HorizontalCardHolder : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        // Whenever a new Canvas opens, make THIS the active card holder
+        Instance = this; 
     }
 
     void Start()
     {
         rect = GetComponent<RectTransform>();
 
-        // Spawn initial cards
-        for (int i = 0; i < cardsToSpawn; i++)
+        // Layout rebuilding happens after instantiation now, via LoadHand()
+    }
+
+    /// <summary>
+    /// Called by the GridUIManager when the screen opens to load the turret's real cards.
+    /// </summary>
+    public void LoadHand(List<TurretCard> pendingCards)
+    {
+        // 1. Clean out any dummy slots or previous UI elements
+        foreach (Transform child in transform)
         {
-            Instantiate(slotPrefab, transform);
+            Destroy(child.gameObject);
         }
+        
+        cardsInHand.Clear();
 
-        cardsInHand = GetComponentsInChildren<CardMovement>().ToList();
-
-        for (int i = 0; i < cardsInHand.Count; i++)
+        // 2. Loop through the turret's pending inventory and spawn them
+        for (int i = 0; i < pendingCards.Count; i++)
         {
-            RegisterCardEvents(cardsInHand[i], i);
+            TurretCard cardData = pendingCards[i];
+            
+            // Instantiate slot
+            GameObject newSlot = Instantiate(slotPrefab, transform);
+            
+            // Instantiate card inside slot
+            //GameObject newCardObj = Instantiate(cardPrefab, newSlot.transform);
+            CardMovement newCardMovement = newSlot.GetComponent<CardMovement>();
+
+            if (newCardMovement != null)
+            {
+                newCardMovement.InitializeCardData(cardData);
+                RegisterCardEvents(newCardMovement, i);
+                cardsInHand.Add(newCardMovement);
+            }
         }
 
         StartCoroutine(Frame());
 
         IEnumerator Frame()
         {
+            // Give the layout group a tiny fraction of a second to arrange the new slots
             yield return new WaitForSecondsRealtime(.1f);
-            
             RebuildHandVisuals();
         }
     }
@@ -136,37 +158,7 @@ public class HorizontalCardHolder : MonoBehaviour
 
     void Update()
     {
-        HandleDebugInput();
         HandleCardSwapping();
-    }
-
-    private void HandleDebugInput()
-    {
-        /*
-        // 2. UPDATED COMMENTED DEBUG INPUT TO NEW INPUT SYSTEM
-        if (Keyboard.current != null && Keyboard.current.deleteKey.wasPressedThisFrame)
-        {
-            if (hoveredCardMovement != null)
-            {
-                // Instantly unparent the slot before destroying it so childCount updates instantly
-                hoveredCardMovement.transform.parent.SetParent(null);
-                Destroy(hoveredCardMovement.transform.parent.gameObject);
-                
-                cardsInHand.Remove(hoveredCardMovement);
-                
-                // Rebuild the hand to reflect the deleted card
-                RebuildHandVisuals();
-            }
-        }
-
-        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
-        {
-            foreach (CardMovement card in cardsInHand)
-            {
-                card.Deselect();
-            }
-        }
-        */
     }
 
     private void HandleCardSwapping()

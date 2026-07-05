@@ -2316,7 +2316,8 @@ MonoBehaviour:
   turnSpeed: 10
   bulletPrefab: {fileID: 7977111001322976423, guid: 239e5765edc76a74985b9ea19e45c6ef, type: 3}
   firePoint: {fileID: 532652340}
-  PendingCards: []
+  PendingCards:
+  - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
 --- !u!65 &939732409
 BoxCollider:
   m_ObjectHideFlags: 0

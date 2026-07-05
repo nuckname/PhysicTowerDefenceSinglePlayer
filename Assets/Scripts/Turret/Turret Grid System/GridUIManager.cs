@@ -14,16 +14,19 @@ public class GridUIManager : MonoBehaviour
     [SerializeField] private Vector2 _gridOffset; // Manual tweak to shift the whole grid
     
     [Header("Inventory Setup")]
-    public Transform inventoryContentPanel; // Drag a UI Panel or ScrollView Content object here
-    public GameObject cardUIPrefab;         // Drag your new Card UI Prefab here
+    public HorizontalCardHolder inventoryCardHolder;
 
     // We remove the Awake/Instance setup. 
     // This is now called right after we Instantiate the prefab.
     public void InitializeAndLoadGrid(TurretGridData MyGridData, List<TurretCard> pendingCards) 
     {
         GenerateUIGrid();
-        PopulateInventory(pendingCards);
 
+        if (inventoryCardHolder != null)
+        {
+            inventoryCardHolder.LoadHand(pendingCards);
+        }
+        
         // Safety check
         if (MyGridData == null || MyGridData.TileStates == null) return;
 
@@ -74,28 +77,6 @@ public class GridUIManager : MonoBehaviour
                 spawnedTile.Init(isOffset, pos);
             
                 _uiTiles[pos] = spawnedTile;
-            }
-        }
-    }
-
-    private void PopulateInventory(List<TurretCard> pendingCards)
-    {
-        // 1. Clear any existing children just in case (prevents duplicates)
-        foreach (Transform child in inventoryContentPanel)
-        {
-            Destroy(child.gameObject);
-        }
-
-        // 2. Loop through the list and spawn a UI element for each one
-        foreach (TurretCard card in pendingCards)
-        {
-            GameObject newCardUI = Instantiate(cardUIPrefab, inventoryContentPanel);
-            
-            // 3. Grab our new script and feed it the data
-            TurretCardUI cardUIComponent = newCardUI.GetComponent<TurretCardUI>();
-            if (cardUIComponent != null)
-            {
-                cardUIComponent.Setup(card);
             }
         }
     }
