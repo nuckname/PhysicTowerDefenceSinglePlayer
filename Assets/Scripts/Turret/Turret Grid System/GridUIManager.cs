@@ -13,11 +13,16 @@ public class GridUIManager : MonoBehaviour
     [SerializeField] private float _tileSize = 100f; // The width/height of your UI Image
     [SerializeField] private Vector2 _gridOffset; // Manual tweak to shift the whole grid
     
+    [Header("Inventory Setup")]
+    public Transform inventoryContentPanel; // Drag a UI Panel or ScrollView Content object here
+    public GameObject cardUIPrefab;         // Drag your new Card UI Prefab here
+
     // We remove the Awake/Instance setup. 
     // This is now called right after we Instantiate the prefab.
-    public void InitializeAndLoadGrid(TurretGridData MyGridData) 
+    public void InitializeAndLoadGrid(TurretGridData MyGridData, List<TurretCard> pendingCards) 
     {
         GenerateUIGrid();
+        PopulateInventory(pendingCards);
 
         // Safety check
         if (MyGridData == null || MyGridData.TileStates == null) return;
@@ -72,10 +77,26 @@ public class GridUIManager : MonoBehaviour
             }
         }
     }
-    
-    // Add a quick way to destroy the canvas when the player closes it
-    public void CloseGrid()
+
+    private void PopulateInventory(List<TurretCard> pendingCards)
     {
-        Destroy(gameObject);
+        // 1. Clear any existing children just in case (prevents duplicates)
+        foreach (Transform child in inventoryContentPanel)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // 2. Loop through the list and spawn a UI element for each one
+        foreach (TurretCard card in pendingCards)
+        {
+            GameObject newCardUI = Instantiate(cardUIPrefab, inventoryContentPanel);
+            
+            // 3. Grab our new script and feed it the data
+            TurretCardUI cardUIComponent = newCardUI.GetComponent<TurretCardUI>();
+            if (cardUIComponent != null)
+            {
+                cardUIComponent.Setup(card);
+            }
+        }
     }
 }

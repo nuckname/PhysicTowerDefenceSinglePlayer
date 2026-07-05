@@ -146,6 +146,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72d103f73c46c407db068681e2811968, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CardData: {fileID: 0}
   instantiateVisual: 1
   moveSpeedLimit: 3000
   selected: 0

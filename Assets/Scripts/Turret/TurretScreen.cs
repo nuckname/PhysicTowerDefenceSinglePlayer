@@ -7,11 +7,13 @@ public class TurretScreen : MonoBehaviour
     private GridUIManager _activeCanvasInstance; // Keeps track of the currently open grid
 
     private TurretGridManager _myGridManager;
+    private Turret _myTurret;
 
     private void Awake()
     {
         // Cache the grid manager attached to this specific turret
         _myGridManager = GetComponent<TurretGridManager>();
+        _myTurret = GetComponent<Turret>();
     }
 
     public void OpenScreen()
@@ -23,13 +25,13 @@ public class TurretScreen : MonoBehaviour
         _activeCanvasInstance = Instantiate(_canvasPrefab);
 
         // 3. Tell the spawned canvas to generate and load the specific turret's data
-        if (_myGridManager != null)
+        if (_myGridManager != null && _myTurret != null)
         {
-            _activeCanvasInstance.InitializeAndLoadGrid(_myGridManager.MyGridData);
+            _activeCanvasInstance.InitializeAndLoadGrid(_myGridManager.MyGridData, _myTurret.PendingCards);
         }
         else
         {
-            Debug.LogError($"TurretGridManager is missing on {gameObject.name}!");
+            Debug.LogError($"Required scripts missing on {gameObject.name}!");
         }
     }
 
