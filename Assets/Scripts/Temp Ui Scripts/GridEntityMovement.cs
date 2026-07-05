@@ -57,10 +57,28 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
 
     private void Update()
     {
-        // R-Key Rotation: Triggers whether we are holding the piece or just pointing at it!
-        if ((_isDragging || _isHovering) && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+        if (_isDragging || _isHovering)
         {
-            RotateVisualsAndData();
+            // R-Key Rotation: Always Clockwise
+            if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+            {
+                RotateVisualsAndData(true);
+            }
+
+            // Scroll Wheel Rotation
+            if (Mouse.current != null)
+            {
+                float scrollY = Mouse.current.scroll.ReadValue().y;
+                
+                if (scrollY > 0f) // Scrolled Up -> Counter-Clockwise
+                {
+                    RotateVisualsAndData(false);
+                }
+                else if (scrollY < 0f) // Scrolled Down -> Clockwise
+                {
+                    RotateVisualsAndData(true);
+                }
+            }
         }
 
         if (_isDragging)
@@ -249,13 +267,19 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         return false;
     }
 
-    private void RotateVisualsAndData()
+    private void RotateVisualsAndData(bool clockwise)
     {
-        // 1. Math Rotation (Tell the data script to update its direction vector)
-        _entity.RotateDirectionClockwise();
-
-        // 2. Visual Rotation (Target Z rotation for our Update loop to smooth towards)
-        _targetZRotation -= 90f;
+        // 1. Math & Visual Rotation
+        if (clockwise)
+        {
+            _entity.RotateDirectionClockwise();
+            _targetZRotation -= 90f;
+        }
+        else
+        {
+            _entity.RotateDirectionCounterClockwise();
+            _targetZRotation += 90f;
+        }
 
         // Cancel any active hover pause so Update starts rotating this instantly
         _isHoverPunching = false;

@@ -61,4 +61,13 @@ public class GridEntity : MonoBehaviour
         else if (CurrentDirection == Vector2Int.down) CurrentDirection = Vector2Int.left;
         else if (CurrentDirection == Vector2Int.left) CurrentDirection = Vector2Int.up;
     }
+
+    // NEW: Added counter-clockwise math for the scroll wheel up!
+    public void RotateDirectionCounterClockwise()
+    {
+        if (CurrentDirection == Vector2Int.up) CurrentDirection = Vector2Int.left;
+        else if (CurrentDirection == Vector2Int.left) CurrentDirection = Vector2Int.down;
+        else if (CurrentDirection == Vector2Int.down) CurrentDirection = Vector2Int.right;
+        else if (CurrentDirection == Vector2Int.right) CurrentDirection = Vector2Int.up;
+    }
 }
