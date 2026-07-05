@@ -5,11 +5,10 @@ using UnityEngine.InputSystem;
 
 public class SelectTurret : MonoBehaviour
 {
-    [Header("UI Spawning")]
-    [SerializeField] private GridUIManager _canvasPrefab; // Drag your new Canvas Prefab here
-    private GridUIManager _activeCanvasInstance; // Keeps track of the currently open grid
-
     private Camera _mainCamera;
+    
+    // Keeps track of the currently selected turret so we can close its screen
+    private TurretScreen _currentlySelectedTurret;
     
     private void Awake()
     {
@@ -42,32 +41,31 @@ public class SelectTurret : MonoBehaviour
         {
             if (hit.collider.CompareTag("Turret"))
             {
-                Turret clickedTurret = hit.collider.GetComponent<Turret>();
-                TurretGridManager clickedTurretsGrid = hit.collider.GetComponent<TurretGridManager>();
+                // Grab the new script attached to the Turret
+                TurretScreen clickedTurretScreen = hit.collider.GetComponent<TurretScreen>();
 
-                if (clickedTurret != null && clickedTurretsGrid != null)
+                if (clickedTurretScreen != null)
                 {
-                    Debug.Log($"Turret Selected: {clickedTurret.gameObject.name}");
+                    Debug.Log($"Turret Selected: {hit.collider.gameObject.name}");
 
-                    // 1. If a grid is already open, destroy it so we don't overlap canvases
-                    if (_activeCanvasInstance != null)
+                    // 1. If a different turret's grid is already open, close it so we don't overlap canvases
+                    if (_currentlySelectedTurret != null && _currentlySelectedTurret != clickedTurretScreen)
                     {
-                        Destroy(_activeCanvasInstance.gameObject);
+                        _currentlySelectedTurret.CloseScreen();
                     }
 
-                    // 2. Spawn the new Canvas
-                    _activeCanvasInstance = Instantiate(_canvasPrefab);
-
-                    // 3. Tell the spawned canvas to generate and load the specific turret's data
-                    _activeCanvasInstance.InitializeAndLoadGrid(clickedTurretsGrid.MyGridData);
+                    // Set the newly clicked turret as the active one and open it
+                    _currentlySelectedTurret = clickedTurretScreen;
+                    _currentlySelectedTurret.OpenScreen();
                 }
             }
             else 
             {
                 // Optional: If you click the ground/empty space, close the active grid
-                if (_activeCanvasInstance != null)
+                if (_currentlySelectedTurret != null)
                 {
-                    Destroy(_activeCanvasInstance.gameObject);
+                    _currentlySelectedTurret.CloseScreen();
+                    _currentlySelectedTurret = null; // Clear the selection
                 }
             }
         }
