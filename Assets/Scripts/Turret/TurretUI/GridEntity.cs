@@ -29,6 +29,8 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     [SerializeField] private float rotationSpeed = 20f;
     [SerializeField] private float rotationAmount = 20f;
 
+    private Vector3 _magneticTargetPosition; // Keeps track of where the piece SHOULD be while dragging
+    
     // Dragging & Interaction State
     private bool _isDragging = false;
     private bool _wasDragged = false;
@@ -75,9 +77,8 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     {
         if (_isDragging)
         {
-            // 1. Follow the mouse exactly like CardMovement
-            Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
-            transform.position = pointerPosition - _offset;
+            // 1. Smoothly glide to either the mouse OR the magnetically snapped tile
+            transform.position = Vector3.Lerp(transform.position, _magneticTargetPosition, 25f * Time.deltaTime);
 
             // 2. Follow Rotation Math (Adapted directly from your CardAnimator)
             Vector3 movement = transform.position - _lastPosition;
@@ -142,21 +143,49 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
-        
+
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
         _offset = pointerPosition - transform.position;
-        
+    
+        _magneticTargetPosition = pointerPosition - _offset; // NEW: Set initial target
+
         _isDragging = true;
         _wasDragged = true;
-        _artwork.raycastTarget = false; // Turn off raycast so we can detect tiles beneath it
-        _originalParent = transform.parent; // Save where we came from
+        _artwork.raycastTarget = false; 
+        _originalParent = transform.parent; 
 
-        // Pop it above all other UI elements
         _canvas.overrideSorting = true;
         _canvas.sortingOrder = 100;
     }
 
-    public void OnDrag(PointerEventData eventData) { }
+    public void OnDrag(PointerEventData eventData) 
+    {
+        if (!_isDragging) return;
+
+        // 1. Default assumption: Follow the mouse exactly
+        Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
+        _magneticTargetPosition = pointerPosition - _offset;
+
+        // 2. Fire a raycast through the UI to see what we are hovering over
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        foreach (RaycastResult result in results)
+        {
+            Tile hitTile = result.gameObject.GetComponent<Tile>();
+            if (hitTile != null)
+            {
+                // Check if the tile is empty
+                GridEntity occupyingEntity = hitTile.GetComponentInChildren<GridEntity>();
+                if (occupyingEntity == null || occupyingEntity == this)
+                {
+                    // MAGNETIC SNAP! Override the mouse position and target the tile's exact center
+                    _magneticTargetPosition = hitTile.transform.position;
+                    break; // Stop checking other UI elements
+                }
+            }
+        }
+    }
 
     public void OnEndDrag(PointerEventData eventData)
     {
