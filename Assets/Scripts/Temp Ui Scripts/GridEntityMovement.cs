@@ -17,7 +17,7 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
     [SerializeField] private float rotationSpeed = 20f;
     [SerializeField] private float rotationAmount = 20f;
 
-    private GridEntity _entity;
+    private GridEntity _gridEntity;
     private Vector3 _magneticTargetPosition; // Keeps track of where the piece SHOULD be while dragging
     
     // Dragging & Interaction State
@@ -36,7 +36,7 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
     private void Awake()
     {
         // Cache our data script
-        _entity = GetComponent<GridEntity>();
+        _gridEntity = GetComponent<GridEntity>();
     }
 
     // Called by GridEntity.Initialize() to ensure fresh state when spawned from a deck/pool
@@ -167,11 +167,11 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
 
         _isDragging = true;
         _wasDragged = true;
-        _entity.Artwork.raycastTarget = false; 
+        _gridEntity.Artwork.raycastTarget = false; 
         _originalParent = transform.parent; 
 
-        _entity.EntityCanvas.overrideSorting = true;
-        _entity.EntityCanvas.sortingOrder = 100;
+        _gridEntity.EntityCanvas.overrideSorting = true;
+        _gridEntity.EntityCanvas.sortingOrder = 100;
     }
 
     public void OnDrag(PointerEventData eventData) 
@@ -193,7 +193,7 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
             {
                 // Check if the tile is empty
                 GridEntity occupyingEntity = hitTile.GetComponentInChildren<GridEntity>();
-                if (occupyingEntity == null || occupyingEntity == _entity)
+                if (occupyingEntity == null || occupyingEntity == _gridEntity)
                 {
                     // MAGNETIC SNAP! Override the mouse position and target the tile's exact center
                     _magneticTargetPosition = hitTile.transform.position;
@@ -208,8 +208,8 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         if (!_isDragging) return;
         
         _isDragging = false;
-        _entity.Artwork.raycastTarget = true;
-        _entity.EntityCanvas.overrideSorting = false;
+        _gridEntity.Artwork.raycastTarget = true;
+        _gridEntity.EntityCanvas.overrideSorting = false;
         
         transform.DOScale(1f, scaleTransition).SetEase(scaleEase);
 
@@ -247,16 +247,16 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
                 // Check if the tile is empty (doesn't have another GridEntity sitting on it)
                 GridEntity occupyingEntity = hitTile.GetComponentInChildren<GridEntity>();
                 
-                if (occupyingEntity == null || occupyingEntity == _entity)
+                if (occupyingEntity == null || occupyingEntity == _gridEntity)
                 {
                     // Success! Snap to the new tile
                     transform.SetParent(hitTile.transform);
                     transform.DOLocalMove(Vector3.zero, 0.2f).SetEase(Ease.OutBack);
                     
-                    _entity.SetGridPosition(hitTile.Position);
+                    _gridEntity.SetGridPosition(hitTile.Position);
                     
                     // Tell the manager the board changed!
-                    if (_entity.MyGridManager != null) _entity.MyGridManager.RecalculateBoard();
+                    if (_gridEntity.MyGridManager != null) _gridEntity.MyGridManager.RecalculateBoard();
                     
                     return true;
                 }
@@ -272,12 +272,12 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         // 1. Math & Visual Rotation
         if (clockwise)
         {
-            _entity.RotateDirectionClockwise();
+            _gridEntity.RotateDirectionClockwise();
             _targetZRotation -= 90f;
         }
         else
         {
-            _entity.RotateDirectionCounterClockwise();
+            _gridEntity.RotateDirectionCounterClockwise();
             _targetZRotation += 90f;
         }
 
@@ -288,9 +288,9 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 10, 1);
 
         // 3. Tell the Grid Manager that the board state has changed
-        if (_entity.MyGridManager != null)
+        if (_gridEntity.MyGridManager != null)
         {
-            _entity.MyGridManager.RecalculateBoard();
+            _gridEntity.MyGridManager.RecalculateBoard();
         }
     }
 }

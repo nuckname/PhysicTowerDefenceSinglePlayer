@@ -13,6 +13,7 @@ public class GridEntity : MonoBehaviour
 
     // Public getters so our movement script can access them
     public GridUIManager MyGridManager { get; private set; }
+    public GridCombatLogic MyGridCombatLogic { get; private set; }
     public Image Artwork { get; private set; }
     public Canvas EntityCanvas { get; private set; }
 

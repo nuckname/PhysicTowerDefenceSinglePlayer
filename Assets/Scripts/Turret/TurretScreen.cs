@@ -27,7 +27,7 @@ public class TurretScreen : MonoBehaviour
         // 3. Tell the spawned canvas to generate and load the specific turret's data
         if (_myGridManager != null && _myTurret != null)
         {
-            _activeCanvasInstance.InitializeAndLoadGrid(_myGridManager.MyGridData, _myTurret.PendingCards);
+            _activeCanvasInstance.InitializeAndLoadGrid(_myGridManager.MyGridData, _myTurret.PendingCards, _myTurret);
         }
         else
         {

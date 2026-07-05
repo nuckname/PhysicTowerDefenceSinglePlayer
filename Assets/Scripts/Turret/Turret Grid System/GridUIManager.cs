@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,14 +19,29 @@ public class GridUIManager : MonoBehaviour
 
     [Header("Entity Management")]
     [SerializeField] private GridEntity _entityPrefab; // Drag your new Grid Entity UI Prefab here
-    private List<GridEntity> _activeEntities = new List<GridEntity>(); // Keeps track of what is on the board
-    private TurretGridData _currentGridData; // Cache this so we can pass it to the cards
+    
+    // (Keeps track of what is on the board) -> MOVED TO GridCombatLogic
+    // (Cache this so we can pass it to the cards) -> MOVED TO GridCombatLogic
+
+    [Header("Dependencies")]
+    [SerializeField] private GridCombatLogic _combatLogic; // Drag your Turret's combat logic component here
+
+    private GridCombatLogic _gridCombatLogic;
+    private void Awake()
+    {
+        _gridCombatLogic = GetComponent<GridCombatLogic>();
+    }
 
     // We remove the Awake/Instance setup. 
     // This is now called right after we Instantiate the prefab.
-    public void InitializeAndLoadGrid(TurretGridData MyGridData, List<TurretCard> pendingCards) 
+    public void InitializeAndLoadGrid(TurretGridData MyGridData, List<TurretCard> pendingCards, Turret myTurret) 
     {
-        _currentGridData = MyGridData; // Cache the data
+        // Pass the raw data and dimensions over to the logic brain
+        if (_combatLogic != null)
+        {
+            _combatLogic.InitializeGridLogic(MyGridData, _width, _height, myTurret);
+        }
+
         GenerateUIGrid();
 
         if (inventoryCardHolder != null)
@@ -107,40 +123,25 @@ public class GridUIManager : MonoBehaviour
         // 3. Initialize its data
         newEntity.Initialize(cardData, gridPosition, this);
         
-        // 4. Add it to our tracking list
-        _activeEntities.Add(newEntity);
-
-        // 5. Run the math!
-        RecalculateBoard();
+        // 4. Add it to our tracking list (Now delegated to the Logic Brain)
+        // 5. Run the math! (Triggered automatically upon registration)
+        if (_combatLogic != null)
+        {
+            _combatLogic.RegisterEntity(newEntity);
+        }
     }
 
-    /// <summary>
-    /// The master math function. Wipes the slate clean and asks every piece to recalculate.
-    /// </summary>
     public void RecalculateBoard()
     {
-        List<StatModifier> allCalculatedModifiers = new List<StatModifier>();
-
-        foreach (GridEntity entity in _activeEntities)
-        {
-            // Call the abstract CalculateEffect on the ScriptableObject
-            List<StatModifier> pieceModifiers = entity.MyCardData.CalculateEffect(
-                entity.CurrentGridPosition, 
-                entity.CurrentDirection, 
-                _currentGridData, 
-                _width, 
-                _height
-            );
-
-            // Add this piece's specific modifiers to the master list
-            if (pieceModifiers != null)
-            {
-                allCalculatedModifiers.AddRange(pieceModifiers);
-            }
-        }
-
-        // NOTE: Here is where you will eventually hand 'allCalculatedModifiers' 
-        // back to the Turret.cs script!
-        Debug.Log($"Board Recalculated! Generated {allCalculatedModifiers.Count} total modifiers.");
+        _gridCombatLogic.RecalculateBoard();
     }
+    
+    // /// <summary>
+    // /// The master math function. Wipes the slate clean and asks every piece to recalculate.
+    // /// </summary>
+    // MOVED TO GridCombatLogic.cs
+    
+    // NOTE: Here is where you will eventually hand 'allCalculatedModifiers' 
+    // back to the Turret.cs script!
+    // MOVED TO GridCombatLogic.cs
 }
