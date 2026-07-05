@@ -34,6 +34,7 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     // Dragging & Interaction State
     private bool _isDragging = false;
     private bool _wasDragged = false;
+    private bool _isHoverPunching = false;
     private Vector3 _offset;
     private Transform _originalParent;
     
@@ -75,6 +76,12 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     private void Update()
     {
+        // NEW: Bypass the disabled raycast by checking raw input while holding this piece!
+        if (_isDragging && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            RotateEntity();
+        }
+
         if (_isDragging)
         {
             // 1. Smoothly glide to either the mouse OR the magnetically snapped tile
@@ -90,10 +97,12 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             float targetX = Mathf.Clamp(movementRotation.y, -60, 60);
             float targetY = Mathf.Clamp(-movementRotation.x, -60, 60);
             
-            Quaternion targetRotation = Quaternion.Euler(targetX, targetY, _targetZRotation);
-            transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRotation, rotationSpeed * Time.deltaTime);
+            Quaternion tiltRot = Quaternion.Euler(targetX, targetY, 0);
+            Quaternion baseZRot = Quaternion.Euler(0, 0, _targetZRotation);
+            
+            transform.localRotation = Quaternion.Lerp(transform.localRotation, tiltRot * baseZRot, rotationSpeed * Time.deltaTime);
         }
-        else
+        else if (!_isHoverPunching) 
         {
             // Smoothly return to a flat resting state, maintaining the Z-Rotation
             Quaternion targetRotation = Quaternion.Euler(0, 0, _targetZRotation);
@@ -102,7 +111,7 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
         _lastPosition = transform.position;
     }
-
+    
     // ==========================================
     // INTERACTION & DRAG EVENTS
     // ==========================================
@@ -110,11 +119,17 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (_isDragging) return;
+        
+        // Safely clear all active tweens to prevent scale/rotation compounding
+        transform.DOKill();
+        
         transform.DOScale(scaleOnHover, scaleTransition).SetEase(scaleEase);
         
         // Kill existing punches to prevent compounding, then punch!
-        DOTween.Kill(transform);
-        transform.DOPunchRotation(Vector3.forward * hoverPunchAngle, scaleTransition, 20, 1);
+        // We set our flag to true, and use OnComplete to let Update() take over again
+        _isHoverPunching = true;
+        transform.DOPunchRotation(Vector3.forward * hoverPunchAngle, scaleTransition, 20, 1)
+            .OnComplete(() => _isHoverPunching = false);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -125,24 +140,30 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        // Snappy right-click rotation while just hovering
+        if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            RotateEntity();
+            return; // Exit early so we don't trigger drag-scaling
+        }
+
         if (eventData.button != PointerEventData.InputButton.Left) return;
         transform.DOScale(scaleOnDrag, scaleTransition).SetEase(scaleEase);
     }
-
     public void OnPointerUp(PointerEventData eventData) { }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Using Right-Click to rotate the entity
-        if (eventData.button == PointerEventData.InputButton.Right && !_isDragging)
-        {
-            RotateEntity();
-        }
+
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Left) return;
+
+        // Force stop any active hover juice so it doesn't corrupt our drag state
+        transform.DOKill();
+        _isHoverPunching = false; 
 
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
         _offset = pointerPosition - transform.position;
@@ -160,7 +181,7 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnDrag(PointerEventData eventData) 
     {
-        if (!_isDragging) return;
+         if (!_isDragging) return;
 
         // 1. Default assumption: Follow the mouse exactly
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
@@ -261,6 +282,9 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
         // 2. Visual Rotation (Target Z rotation for our Update loop to smooth towards)
         _targetZRotation -= 90f;
+
+        // Cancel any active hover pause so Update starts rotating this instantly
+        _isHoverPunching = false;
 
         // Juice it!
         transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 10, 1);

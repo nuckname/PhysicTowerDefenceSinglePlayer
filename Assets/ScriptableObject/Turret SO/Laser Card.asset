@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Laser Card
   m_EditorClassIdentifier: Assembly-CSharp::LaserCard
   CardName: Laser
-  CardArtwork: {fileID: 0}
+  CardArtwork: {fileID: 21300000, guid: 1dafe7e5b675c754598db054b8063e47, type: 3}
   BaseDamage: 10
   DamagePerSquare: 5
