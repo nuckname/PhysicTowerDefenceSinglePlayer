@@ -64,7 +64,8 @@ public class HorizontalCardHolder : MonoBehaviour
     /// ensuring it is placed in a Slot and its events are wired correctly.
     /// Now accepts a start position to animate from the mouse cursor!
     /// </summary>
-    public void AddCardToHand(GameObject cardPrefabToSpawn, Vector3? startScreenPosition = null)
+    // 1. ADDED TurretCard cardData parameter
+    public void AddCardToHand(GameObject cardPrefabToSpawn, TurretCard cardData, Vector3? startScreenPosition = null)
     {
         // Instantiate a new slot so the layout group handles it properly
         GameObject newSlot = Instantiate(slotPrefab, transform);
@@ -75,6 +76,9 @@ public class HorizontalCardHolder : MonoBehaviour
 
         if (newCardMovement != null)
         {
+            // 2. INJECT THE DATA INTO THE CARD!
+            newCardMovement.InitializeCardData(cardData);
+            
             RegisterCardEvents(newCardMovement, transform.childCount - 1);
         }
 
