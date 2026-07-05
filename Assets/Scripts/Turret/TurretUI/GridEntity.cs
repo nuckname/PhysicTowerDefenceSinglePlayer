@@ -34,7 +34,8 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
     // Dragging & Interaction State
     private bool _isDragging = false;
     private bool _wasDragged = false;
-    private bool _isHoverPunching = false;
+    private bool _isHovering = false; // Tracks if the mouse is currently pointing at the piece
+    private bool _isHoverPunching = false; // Prevents Update from fighting DOTween
     private Vector3 _offset;
     private Transform _originalParent;
     
@@ -76,8 +77,8 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     private void Update()
     {
-        // NEW: Bypass the disabled raycast by checking raw input while holding this piece!
-        if (_isDragging && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+        // R-Key Rotation: Triggers whether we are holding the piece or just pointing at it!
+        if ((_isDragging || _isHovering) && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
         {
             RotateEntity();
         }
@@ -97,10 +98,12 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
             float targetX = Mathf.Clamp(movementRotation.y, -60, 60);
             float targetY = Mathf.Clamp(-movementRotation.x, -60, 60);
             
+            // Multiply the tilt and base rotation so the tilt is always relative to the screen!
             Quaternion tiltRot = Quaternion.Euler(targetX, targetY, 0);
             Quaternion baseZRot = Quaternion.Euler(0, 0, _targetZRotation);
+            Quaternion targetRotation = tiltRot * baseZRot;
             
-            transform.localRotation = Quaternion.Lerp(transform.localRotation, tiltRot * baseZRot, rotationSpeed * Time.deltaTime);
+            transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
         else if (!_isHoverPunching) 
         {
@@ -111,13 +114,15 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
         _lastPosition = transform.position;
     }
-    
+
     // ==========================================
     // INTERACTION & DRAG EVENTS
     // ==========================================
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        _isHovering = true;
+        
         if (_isDragging) return;
         
         // Safely clear all active tweens to prevent scale/rotation compounding
@@ -126,36 +131,28 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
         transform.DOScale(scaleOnHover, scaleTransition).SetEase(scaleEase);
         
         // Kill existing punches to prevent compounding, then punch!
-        // We set our flag to true, and use OnComplete to let Update() take over again
         _isHoverPunching = true;
         transform.DOPunchRotation(Vector3.forward * hoverPunchAngle, scaleTransition, 20, 1)
-            .OnComplete(() => _isHoverPunching = false);
+                 .OnComplete(() => _isHoverPunching = false);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        _isHovering = false;
+        
         if (_isDragging) return;
         if (!_wasDragged) transform.DOScale(1f, scaleTransition).SetEase(scaleEase);
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        // Snappy right-click rotation while just hovering
-        if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
-        {
-            RotateEntity();
-            return; // Exit early so we don't trigger drag-scaling
-        }
-
         if (eventData.button != PointerEventData.InputButton.Left) return;
         transform.DOScale(scaleOnDrag, scaleTransition).SetEase(scaleEase);
     }
+
     public void OnPointerUp(PointerEventData eventData) { }
 
-    public void OnPointerClick(PointerEventData eventData)
-    {
-
-    }
+    public void OnPointerClick(PointerEventData eventData) { }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
@@ -181,7 +178,7 @@ public class GridEntity : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 
     public void OnDrag(PointerEventData eventData) 
     {
-         if (!_isDragging) return;
+        if (!_isDragging) return;
 
         // 1. Default assumption: Follow the mouse exactly
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
