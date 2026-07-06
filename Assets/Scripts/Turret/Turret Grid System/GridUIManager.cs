@@ -192,6 +192,7 @@ public class GridUIManager : MonoBehaviour
         // 5. Run the math! (Triggered automatically upon registration)
         if (newCardEntity != null && _combatLogic != null)
         {
+            _linkedTurret.PendingCards.Remove(cardData);
             _combatLogic.RegisterEntity(newCardEntity);
         }
     }

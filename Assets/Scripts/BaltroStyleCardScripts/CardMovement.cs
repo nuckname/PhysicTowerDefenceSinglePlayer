@@ -227,7 +227,7 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 GridUIManager gridManager = FindAnyObjectByType<GridUIManager>();
                 if (gridManager != null)
                 {
-                    gridManager.PlaceCardOnGrid(CardData, hitTile.Position); // <-- Ensure Tile.cs has "Position"
+                    gridManager.PlaceCardOnGrid(CardData, hitTile.Position);
                     
                     Debug.Log($"Dropped {CardData.gridName} onto UI Grid!");
                     SuccessfulPlay();
