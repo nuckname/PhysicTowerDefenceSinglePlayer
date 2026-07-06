@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2be3270d672496f4eb3ac0bb01a1f59e, type: 3}
   m_Name: Laser Card
   m_EditorClassIdentifier: Assembly-CSharp::LaserCard
-  CardName: Laser
-  CardArtwork: {fileID: 21300000, guid: 1dafe7e5b675c754598db054b8063e47, type: 3}
-  BaseDamage: 10
+  gridName: 
+  girdArtwork: {fileID: 21300000, guid: 1dafe7e5b675c754598db054b8063e47, type: 3}
+  baseDamage: 10
   DamagePerSquare: 5
+  LaserBeamSprite: {fileID: 21300000, guid: 2eeb8e34bb0edf2409e65b7c3f24978d, type: 3}
+  LaserBeamPrefab: {fileID: 5236309299279783787, guid: 39ad6971e48b31748bca2800d50f574e, type: 3}

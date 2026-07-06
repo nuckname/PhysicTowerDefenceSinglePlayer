@@ -3,9 +3,7 @@ using UnityEngine;
 
 public class GridCombatLogic : MonoBehaviour
 {
-    [Header("Visual Dependencies")]
-    [Tooltip("Create an empty UI object inside your grid to hold the laser beams, and drag it here.")]
-    [SerializeField] private Transform _visualsParent; 
+    private GridUIManager _uiManager;
     
     // Assigned via initialization, NOT GetComponent
     private Turret _activeTurret;
@@ -14,8 +12,7 @@ public class GridCombatLogic : MonoBehaviour
     private List<GridEntity> _activeEntities = new List<GridEntity>(); 
     private TurretGridData _currentGridData;
     
-    private int _gridWidth;
-    private int _gridHeight;
+    private List<GameObject> _spawnedVisuals = new List<GameObject>();
 
     // We completely remove Awake() since we don't want GetComponent here anymore.
 
@@ -23,11 +20,10 @@ public class GridCombatLogic : MonoBehaviour
     /// Call this from GridUIManager when opening the grid UI.
     /// Passes the active turret from the game world into the UI logic.
     /// </summary>
-    public void InitializeGridLogic(TurretGridData gridData, int width, int height, Turret linkedTurret)
+    public void InitializeGridLogic(TurretGridData gridData, GridUIManager manager, Turret linkedTurret) // UPDATED PARAMETERS
     {
         _currentGridData = gridData;
-        _gridWidth = width;
-        _gridHeight = height;
+        _uiManager = manager; // Now we save the manager reference directly
         _activeTurret = linkedTurret; // Inject the reference
     }
 
@@ -52,65 +48,42 @@ public class GridCombatLogic : MonoBehaviour
     // This is the master function: Clears the board -> Does the Math -> Draws the Visuals
     public void RecalculateBoard()
     {
-        // 1. Wipe old visuals so lasers don't stack infinitely
         ClearOldVisuals();
 
         List<StatModifier> allCalculatedModifiers = new List<StatModifier>();
-
-        if (_currentGridData != null)
-        {
-            _currentGridData.SavedCards.Clear();
-        }
+        if (_currentGridData != null) _currentGridData.SavedCards.Clear();
         
         foreach (GridEntity entity in _activeEntities)
         {
             if (_currentGridData != null)
             {
                 _currentGridData.SavedCards.Add(new PlacedCardSaveState(
-                    entity.MyCardData, 
-                    entity.CurrentGridPosition, 
-                    entity.CurrentDirection
+                    entity.MyCardData, entity.CurrentGridPosition, entity.CurrentDirection
                 ));
             }
             
-            // 2. MATH: Calculate modifiers
+            // 2. MATH: Ask the UIManager for the grid dimensions
             List<StatModifier> pieceModifiers = entity.MyCardData.CalculateEffect(
                 entity.CurrentGridPosition, 
                 entity.CurrentDirection, 
                 _currentGridData, 
-                _gridWidth, 
-                _gridHeight
+                _uiManager.GridWidth, 
+                _uiManager.GridHeight
             );
 
-            if (pieceModifiers != null)
-            {
-                // Aggregating all modifiers natively 
-                allCalculatedModifiers.AddRange(pieceModifiers);
-            }
+            if (pieceModifiers != null) allCalculatedModifiers.AddRange(pieceModifiers);
 
-            // 3. VISUALS: Spawn the dynamic beams/sprites
-            if (_visualsParent != null)
-            {
-                entity.MyCardData.SpawnVisuals(
-                    entity.CurrentGridPosition, 
-                    entity.CurrentDirection, 
-                    _currentGridData, 
-                    _gridWidth, 
-                    _gridHeight, 
-                    _visualsParent
-                );
-            }
+            // 3. VISUALS: Pass the UIManager and our Tracking List
+            entity.MyCardData.SpawnVisuals(
+                entity.CurrentGridPosition, 
+                entity.CurrentDirection, 
+                _currentGridData, 
+                _uiManager,         // Pass the manager so the card can request tile transforms
+                _spawnedVisuals     // Pass the list so the card can log what it spawned
+            );
         }
 
-        // 4. APPLY: Send the total accumulated board state to the game world Turret
-        if (_activeTurret != null)
-        {
-            _activeTurret.UpdateModifiers(allCalculatedModifiers);
-        }
-        else
-        {
-            Debug.LogWarning("GridCombatLogic: No Turret is linked! Modifiers were calculated but not applied.");
-        }
+        if (_activeTurret != null) _activeTurret.UpdateModifiers(allCalculatedModifiers);
     }
 
     /// <summary>
@@ -118,12 +91,11 @@ public class GridCombatLogic : MonoBehaviour
     /// </summary>
     private void ClearOldVisuals()
     {
-        if (_visualsParent == null) return;
-
-        // Loop backwards when destroying children to avoid index shifting issues
-        for (int i = _visualsParent.childCount - 1; i >= 0; i--)
+        // Destroy all tracked visual segments
+        foreach (GameObject visualSegment in _spawnedVisuals)
         {
-            Destroy(_visualsParent.GetChild(i).gameObject);
+            if (visualSegment != null) Destroy(visualSegment);
         }
+        _spawnedVisuals.Clear();
     }
 }

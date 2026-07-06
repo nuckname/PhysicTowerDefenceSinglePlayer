@@ -25,6 +25,9 @@ public class GridUIManager : MonoBehaviour
 
     private TurretGridData _currentGridData;
     
+    public int GridWidth => _width;
+    public int GridHeight => _height;
+    
     private GridCombatLogic _gridCombatLogic;
     private void Awake()
     {
@@ -38,7 +41,7 @@ public class GridUIManager : MonoBehaviour
         // Pass the raw data and dimensions over to the logic brain
         if (_combatLogic != null)
         {
-            _combatLogic.InitializeGridLogic(MyGridData, _width, _height, myTurret);
+            _combatLogic.InitializeGridLogic(MyGridData, this, myTurret);
         }
 
         _currentGridData = MyGridData;
@@ -71,6 +74,18 @@ public class GridUIManager : MonoBehaviour
         }
 
         LoadSavedBoardState();
+    }
+    
+    /// <summary>
+    /// Returns the transform of a specific UI tile so we can parent entities to it.
+    /// </summary>
+    public Transform GetTileTransform(Vector2Int gridPosition)
+    {
+        if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition))
+        {
+            return _uiTiles[gridPosition].transform;
+        }
+        return null;
     }
     
     /// <summary>
