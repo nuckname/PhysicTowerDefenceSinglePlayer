@@ -20,8 +20,11 @@ public abstract class GridData : ScriptableObject
     {
     }
     
-    public virtual void OnRoundStart(GridUIManager uiManager, Vector2Int position)
+    public virtual void OnRoundStart(GridUIManager uiManager, GridEntity sourceEntity)
     {
+    }
 
+    public virtual void OnRoundEnd(GridUIManager uiManager, GridEntity sourceEntity)
+    {
     }
 }

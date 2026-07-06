@@ -8,6 +8,8 @@ public class GridCombatLogic : MonoBehaviour
     // Assigned via initialization, NOT GetComponent
     private Turret _activeTurret;
     
+    public List<GridEntity> ActiveEntities => _activeEntities;
+    
     // Entity tracking
     private List<GridEntity> _activeEntities = new List<GridEntity>(); 
     private TurretGridData _currentGridData;

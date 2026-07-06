@@ -234,26 +234,37 @@ public class GridUIManager : MonoBehaviour
 
     private void HandleRoundStarted()
     {
-        if (_currentGridData == null || _currentGridData.SavedCards == null) return;
+        if (_gridCombatLogic == null) return;
 
-        // Ask every card currently on the board to do its Round Start logic
-        foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
+        // Loop through the ACTUAL spawned entities on the board
+        foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
         {
-            savedCard.CardData.OnRoundStart(this, savedCard.GridPosition);
+            // Tell the card the round started and pass the physical entity!
+            entity.MyCardData.OnRoundStart(this, entity);
         }
     }
 
     private void HandleRoundEnded()
     {
-        // Destroy all bouncing orbs when the FSM enters RoundOverState
+        // 1. Destroy all the bouncing orbs
         foreach (GridEntity bouncer in _activeBouncers)
         {
-            if (bouncer != null)
-            {
-                Destroy(bouncer.gameObject);
-            }
+            if (bouncer != null) Destroy(bouncer.gameObject);
         }
         _activeBouncers.Clear();
+
+        // 2. Loop through all the hidden base entities and turn them back on!
+        if (_gridCombatLogic != null)
+        {
+            foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
+            {
+                // Turn the visual UI card back on
+                entity.gameObject.SetActive(true);
+                
+                // Trigger the end round event just in case any cards need it
+                entity.MyCardData.OnRoundEnd(this, entity); 
+            }
+        }
     }
 
     public void RecalculateBoard()
