@@ -83,6 +83,12 @@ public class GridEntity : MonoBehaviour
         else if (CurrentDirection == Vector2Int.down) angle = -180f;
         else if (CurrentDirection == Vector2Int.left) angle = 90f;
 
+        // Tell the movement script exactly what rotation it should hold
+        if (TryGetComponent(out GridEntityMovement movementScript))
+        {
+            movementScript.ForceZRotation(angle);
+        }
+        
         if (Artwork != null)
         {
             Artwork.transform.rotation = Quaternion.Euler(0, 0, angle);

@@ -112,6 +112,15 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
 
         _lastPosition = transform.position;
     }
+    
+    // Called when loading a saved board state to sync the movement script's rotation
+    public void ForceZRotation(float zRotation)
+    {
+        _targetZRotation = zRotation;
+        
+        // Immediately snap the rotation so it doesn't try to Lerp from 0 to the saved angle
+        transform.localRotation = Quaternion.Euler(0, 0, _targetZRotation);
+    }
 
     // ==========================================
     // INTERACTION & DRAG EVENTS
