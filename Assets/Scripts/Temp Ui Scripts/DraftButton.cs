@@ -9,23 +9,23 @@ public class DraftButton : MonoBehaviour
     public TMP_Text CardNameText;
     
     // The specific data this button currently holds
-    private TurretCard _assignedCardData;
+    private GridData _assignedCardData;
     private DraftManager _manager;
 
     // The manager calls this to set up the button visually
-    public void SetupButton(TurretCard cardData, DraftManager manager)
+    public void SetupButton(GridData cardData, DraftManager manager)
     {
         _assignedCardData = cardData;
         _manager = manager;
 
-        if (CardIcon != null && cardData.CardArtwork != null)
+        if (CardIcon != null && cardData.girdArtwork != null)
         {
-            CardIcon.sprite = cardData.CardArtwork;
+            CardIcon.sprite = cardData.girdArtwork;
         }
 
         if (CardNameText != null)
         {
-            CardNameText.text = cardData.CardName;
+            CardNameText.text = cardData.gridName;
         }
     }
 

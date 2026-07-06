@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IPointerUpHandler, IPointerDownHandler
 {
     [Header("Card Data")]
-    public TurretCard CardData; // The actual stats/upgrade this UI card represents
+    public GridData CardData; // The actual stats/upgrade this UI card represents
     
     private Image _imageComponent;
     [SerializeField] private bool instantiateVisual = true;
@@ -76,12 +76,12 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     }
 
     // Call this right after spawning the card to give it its data and artwork
-    public void InitializeCardData(TurretCard data)
+    public void InitializeCardData(GridData data)
     {
         CardData = data;
-        if (_imageComponent != null && data.CardArtwork != null)
+        if (_imageComponent != null && data.girdArtwork != null)
         {
-            _imageComponent.sprite = data.CardArtwork;
+            _imageComponent.sprite = data.girdArtwork;
         }
     }
 
@@ -227,11 +227,9 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 GridUIManager gridManager = FindAnyObjectByType<GridUIManager>();
                 if (gridManager != null)
                 {
-                    // NOTE: You will need a public getter for the Position in your Tile.cs
-                    // Example: hitTile.GridPosition
                     gridManager.PlaceCardOnGrid(CardData, hitTile.Position); // <-- Ensure Tile.cs has "Position"
                     
-                    Debug.Log($"Dropped {CardData.CardName} onto UI Grid!");
+                    Debug.Log($"Dropped {CardData.gridName} onto UI Grid!");
                     SuccessfulPlay();
                     return true;
                 }
@@ -263,7 +261,7 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
                 if (targetTurret != null)
                 {
-                    Debug.Log($"Dropped {CardData.CardName} onto {targetTurret.gameObject.name}!");
+                    Debug.Log($"Dropped {CardData.gridName} onto {targetTurret.gameObject.name}!");
                     
                     // Add the card to the turret's pending inventory
                     targetTurret.AddCardToInventory(CardData);

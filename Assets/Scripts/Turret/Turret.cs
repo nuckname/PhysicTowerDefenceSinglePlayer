@@ -22,7 +22,7 @@ public class Turret : MonoBehaviour
 
     [Header("Pending Inventory")]
     // Cards sitting in the turret, waiting to be placed on the grid
-    public List<TurretCard> PendingCards = new List<TurretCard>();
+    public List<GridData> PendingCards = new List<GridData>();
 
 
     private void Start()
@@ -66,12 +66,12 @@ public class Turret : MonoBehaviour
         return matchingStat != null ? matchingStat.CurrentValue : 0f;
     }
     
-    public void AddCardToInventory(TurretCard card)
+    public void AddCardToInventory(GridData card)
     {
         if (!PendingCards.Contains(card))
         {
             PendingCards.Add(card);
-            Debug.Log($"{card.CardName} added to turret inventory!");
+            Debug.Log($"{card.gridName} added to turret inventory!");
         }
     }
 

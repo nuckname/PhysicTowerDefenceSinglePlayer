@@ -20,9 +20,6 @@ public class GridUIManager : MonoBehaviour
     [Header("Entity Management")]
     [SerializeField] private GridEntity _entityPrefab; // Drag your new Grid Entity UI Prefab here
     
-    // (Keeps track of what is on the board) -> MOVED TO GridCombatLogic
-    // (Cache this so we can pass it to the cards) -> MOVED TO GridCombatLogic
-
     [Header("Dependencies")]
     [SerializeField] private GridCombatLogic _combatLogic; // Drag your Turret's combat logic component here
 
@@ -36,7 +33,7 @@ public class GridUIManager : MonoBehaviour
 
     // We remove the Awake/Instance setup. 
     // This is now called right after we Instantiate the prefab.
-    public void InitializeAndLoadGrid(TurretGridData MyGridData, List<TurretCard> pendingCards, Turret myTurret) 
+    public void InitializeAndLoadGrid(TurretGridData MyGridData, List<GridData> pendingCards, Turret myTurret) 
     {
         // Pass the raw data and dimensions over to the logic brain
         if (_combatLogic != null)
@@ -148,7 +145,7 @@ public class GridUIManager : MonoBehaviour
     /// <summary>
     /// Call this when the player drops a card from their hand onto a valid tile.
     /// </summary>
-    public void PlaceCardOnGrid(TurretCard cardData, Vector2Int gridPosition)
+    public void PlaceCardOnGrid(GridData cardData, Vector2Int gridPosition)
     {
         // 1. Double check the tile exists
         if (!_uiTiles.ContainsKey(gridPosition)) return;

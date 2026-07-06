@@ -5,11 +5,11 @@ using UnityEngine;
 [System.Serializable]
 public class PlacedCardSaveState
 {
-    public TurretCard CardData;
+    public GridData CardData;
     public Vector2Int GridPosition;
     public Vector2Int Direction;
 
-    public PlacedCardSaveState(TurretCard data, Vector2Int pos, Vector2Int dir)
+    public PlacedCardSaveState(GridData data, Vector2Int pos, Vector2Int dir)
     {
         CardData = data;
         GridPosition = pos;

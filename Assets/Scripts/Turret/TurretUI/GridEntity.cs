@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class GridEntity : MonoBehaviour
 {
     [Header("Entity Data")]
-    public TurretCard MyCardData { get; private set; }
+    public GridData MyCardData { get; private set; }
     public Vector2Int CurrentGridPosition { get; private set; }
     public Vector2Int CurrentDirection { get; private set; } = Vector2Int.up; // Defaults to facing North (0, 1)
 
@@ -27,16 +27,16 @@ public class GridEntity : MonoBehaviour
     }
 
     // Called by the GridUIManager the moment this is dropped onto a tile
-    public void Initialize(TurretCard cardData, Vector2Int startPos, GridUIManager manager)
+    public void Initialize(GridData cardData, Vector2Int startPos, GridUIManager manager)
     {
         MyCardData = cardData;
         CurrentGridPosition = startPos;
         MyGridManager = manager;
 
         // Set the UI visual to match the card
-        if (cardData.CardArtwork != null)
+        if (cardData.girdArtwork != null)
         {
-            Artwork.sprite = cardData.CardArtwork;
+            Artwork.sprite = cardData.girdArtwork;
         }
 
         CurrentDirection = Vector2Int.up;

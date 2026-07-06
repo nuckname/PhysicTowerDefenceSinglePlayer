@@ -13,7 +13,7 @@ public class DraftManager : MonoBehaviour
 
     [Header("Reward Pool")]
     // Drag ALL possible cards in your game into this list in the Inspector
-    public List<TurretCard> MasterCardPool = new List<TurretCard>(); 
+    public List<GridData> MasterCardPool = new List<GridData>(); 
 
     private void Start()
     {
@@ -42,7 +42,7 @@ public class DraftManager : MonoBehaviour
         }
 
         // 1. Create a temporary copy of the pool so we don't pick duplicates
-        List<TurretCard> tempPool = new List<TurretCard>(MasterCardPool);
+        List<GridData> tempPool = new List<GridData>(MasterCardPool);
 
         // 2. Loop through all 3 buttons and assign them a random card
         foreach (DraftButton button in RewardButtons)
@@ -65,7 +65,7 @@ public class DraftManager : MonoBehaviour
     /// <summary>
     /// Called by the DraftButton when the player clicks it.
     /// </summary>
-    public void ClaimReward(TurretCard chosenCard, Vector3 buttonScreenPosition)
+    public void ClaimReward(GridData chosenCard, Vector3 buttonScreenPosition)
     {
         if (HorizontalCardHolder.Instance != null)
         {

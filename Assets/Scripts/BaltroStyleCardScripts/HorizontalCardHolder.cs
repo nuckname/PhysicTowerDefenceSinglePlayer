@@ -41,7 +41,7 @@ public class HorizontalCardHolder : MonoBehaviour
     /// <summary>
     /// Called by the GridUIManager when the screen opens to load the turret's real cards.
     /// </summary>
-    public void LoadHand(List<TurretCard> pendingCards)
+    public void LoadHand(List<GridData> pendingCards)
     {
         // 1. Clean out any dummy slots or previous UI elements
         foreach (Transform child in transform)
@@ -54,7 +54,7 @@ public class HorizontalCardHolder : MonoBehaviour
         // 2. Loop through the turret's pending inventory and spawn them
         for (int i = 0; i < pendingCards.Count; i++)
         {
-            TurretCard cardData = pendingCards[i];
+            GridData cardData = pendingCards[i];
             
             // Instantiate slot
             GameObject newSlot = Instantiate(slotPrefab, transform);
@@ -85,7 +85,7 @@ public class HorizontalCardHolder : MonoBehaviour
     /// Now accepts a start position to animate from the mouse cursor!
     /// </summary>
     // 1. ADDED TurretCard cardData parameter
-    public void AddCardToHand(GameObject cardPrefabToSpawn, TurretCard cardData, Vector3? startScreenPosition = null)
+    public void AddCardToHand(GameObject cardPrefabToSpawn, GridData cardData, Vector3? startScreenPosition = null)
     {
         // Instantiate a new slot so the layout group handles it properly
         GameObject newSlot = Instantiate(slotPrefab, transform);

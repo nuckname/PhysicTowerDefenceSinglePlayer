@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI; // Required for rendering sprites on a UI Canvas
 
 [CreateAssetMenu(fileName = "New Laser Card", menuName = "Grid System/Cards/Laser Upgrade")]
-public class LaserCard : TurretCard
+public class LaserGridTile : GridData
 {
     [Header("Laser Specifics")]
     public int DamagePerSquare = 5;
@@ -15,7 +15,7 @@ public class LaserCard : TurretCard
     {
         int squaresTraveled = GetTravelDistance(startPos, direction, gridData, gridWidth, gridHeight);
         
-        int calculatedDamageBonus = BaseDamage + (squaresTraveled * DamagePerSquare);
+        int calculatedDamageBonus = baseDamage + (squaresTraveled * DamagePerSquare);
 
         List<StatModifier> modifiers = new List<StatModifier>();
         

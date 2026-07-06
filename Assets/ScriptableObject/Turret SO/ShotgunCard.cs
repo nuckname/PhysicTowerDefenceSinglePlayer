@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Shotgun Card", menuName = "Grid System/Cards/Shotgun Upgrade")]
-public class ShotgunCard : TurretCard
+public class ShotgunCard : GridData
 {
     [Header("Shotgun Specifics")]
     public int FalloffPerSquare = 2;
@@ -12,7 +12,7 @@ public class ShotgunCard : TurretCard
         // Simple logic: measure the distance to the edge of the grid 
         int distanceToEdge = gridWidth - startPos.x; // (Assuming shooting right)
         
-        int finalDamage = BaseDamage - (distanceToEdge * FalloffPerSquare);
+        int finalDamage = baseDamage - (distanceToEdge * FalloffPerSquare);
         
         List<StatModifier> modifiers = new List<StatModifier>();
         

@@ -5,7 +5,7 @@ using UnityEditor;
 public class TurretEditor : Editor
 {
     // Temporary reference to hold the card in the inspector before we press 'Add'
-    private TurretCard _cardToAdd;
+    private GridData _cardToAdd;
 
     public override void OnInspectorGUI()
     {
@@ -23,7 +23,7 @@ public class TurretEditor : Editor
         EditorGUILayout.BeginHorizontal();
         
         // Create an object picker field specifically for TurretCards
-        _cardToAdd = (TurretCard)EditorGUILayout.ObjectField("Select Card", _cardToAdd, typeof(TurretCard), false);
+        _cardToAdd = (GridData)EditorGUILayout.ObjectField("Select Card", _cardToAdd, typeof(GridData), false);
 
         // Create the button that triggers the add function
         if (GUILayout.Button("Add to Inventory", GUILayout.Width(120)))
