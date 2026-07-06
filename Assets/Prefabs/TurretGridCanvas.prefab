@@ -232,6 +232,7 @@ MonoBehaviour:
   _gridOffset: {x: 1, y: 1}
   inventoryCardHolder: {fileID: 609367296152328711}
   _entityPrefab: {fileID: 5236309299279783787, guid: 39ad6971e48b31748bca2800d50f574e, type: 3}
+  _bouncingPrefab: {fileID: 5236309299279783787, guid: 81c11df537ecd4338b67ee7d078556b1, type: 3}
   _combatLogic: {fileID: 7586477107257660140}
 --- !u!114 &7586477107257660140
 MonoBehaviour:
@@ -245,7 +246,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514cf029b20bc394490b443754b2c398, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridCombatLogic
-  _visualsParent: {fileID: 768804581484964985}
 --- !u!1001 &2756551343860392117
 PrefabInstance:
   m_ObjectHideFlags: 0

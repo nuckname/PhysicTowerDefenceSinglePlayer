@@ -10,9 +10,13 @@ public abstract class GridData : ScriptableObject
 
     public abstract List<StatModifier> CalculateEffect(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, int gridWidth, int gridHeight);
 
-    // NEW: Virtual method to handle visual spawning. Base does nothing.
     public virtual void SpawnVisuals(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, GridUIManager uiManager, List<GameObject> spawnedVisualsTracker)
     {
-        // Leave blank for base classes to override
+    }
+
+    // Virtual method to handle wall bounces.
+    // We pass in everything the card might need to calculate a cool effect.
+    public virtual void OnWallBounce(Vector2Int bouncePos, TurretGridData gridData, GridUIManager uiManager, Turret linkedTurret)
+    {
     }
 }

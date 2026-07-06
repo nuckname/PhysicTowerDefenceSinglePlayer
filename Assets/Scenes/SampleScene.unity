@@ -2322,6 +2322,7 @@ MonoBehaviour:
   firePoint: {fileID: 532652340}
   PendingCards:
   - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
+  - {fileID: 11400000, guid: fc92276a3ef504771b38dbc7fe2a8afe, type: 2}
 --- !u!65 &939732409
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2441,6 +2442,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b64b6acf75a0a0946a88d941bd980410, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  MyGridData:
+    SavedCards: []
 --- !u!114 &939732415
 MonoBehaviour:
   m_ObjectHideFlags: 0

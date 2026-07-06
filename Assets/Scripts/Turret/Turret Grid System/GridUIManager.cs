@@ -20,6 +20,9 @@ public class GridUIManager : MonoBehaviour
     [Header("Entity Management")]
     [SerializeField] private GridEntity _entityPrefab; // Drag your new Grid Entity UI Prefab here
     
+    // NEW: Add a slot for your bouncing prefab
+    [SerializeField] private GridEntity _bouncingPrefab; 
+    
     [Header("Dependencies")]
     [SerializeField] private GridCombatLogic _combatLogic; // Drag your Turret's combat logic component here
 
@@ -29,6 +32,8 @@ public class GridUIManager : MonoBehaviour
     public int GridHeight => _height;
     
     private GridCombatLogic _gridCombatLogic;
+    private Turret _linkedTurret; // We need to store this so the bouncing item can access it
+    
     private void Awake()
     {
         _gridCombatLogic = GetComponent<GridCombatLogic>();
@@ -38,6 +43,8 @@ public class GridUIManager : MonoBehaviour
     // This is now called right after we Instantiate the prefab.
     public void InitializeAndLoadGrid(TurretGridData MyGridData, List<GridData> pendingCards, Turret myTurret) 
     {
+        _linkedTurret = myTurret; // Store it for later
+
         // Pass the raw data and dimensions over to the logic brain
         if (_combatLogic != null)
         {
@@ -97,28 +104,24 @@ public class GridUIManager : MonoBehaviour
 
         foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
         {
-            // 1. Double check the tile still exists in the UI
-            if (!_uiTiles.ContainsKey(savedCard.GridPosition)) continue;
-
-            Tile targetTile = _uiTiles[savedCard.GridPosition];
-
-            // 2. Spawn the entity just like we do when a player drops a card
-            GridEntity loadedEntity = Instantiate(_entityPrefab, targetTile.transform);
+            // We can now use our new modular spawner here too!
+            GridEntity loadedEntity = SpawnEntityOnTile(_entityPrefab, savedCard.CardData, savedCard.GridPosition);
             
-            // 3. Initialize it with the saved data
-            loadedEntity.Initialize(savedCard.CardData, savedCard.GridPosition, this);
-            
-            // 4. Force the rotation/direction to match what was saved
-            // Assuming you add a quick setter in your GridEntity script:
-            loadedEntity.SetDirection(savedCard.Direction); 
-            
-            // 5. Register it with the combat logic
-            if (_combatLogic != null)
+            if (loadedEntity != null)
             {
-                _combatLogic.RegisterEntity(loadedEntity);
+                // 4. Force the rotation/direction to match what was saved
+                // Assuming you add a quick setter in your GridEntity script:
+                loadedEntity.SetDirection(savedCard.Direction); 
+                
+                // 5. Register it with the combat logic
+                if (_combatLogic != null)
+                {
+                    _combatLogic.RegisterEntity(loadedEntity);
+                }
             }
         }
     }
+
 
     private void GenerateUIGrid() 
     {
@@ -158,26 +161,63 @@ public class GridUIManager : MonoBehaviour
     // ==========================================
 
     /// <summary>
-    /// Call this when the player drops a card from their hand onto a valid tile.
+    /// Handles the physical instantiation and parenting of ANY entity onto a grid tile.
+    /// Does NOT trigger combat math. Safe for visual effects, lasers, and bouncing items.
     /// </summary>
-    public void PlaceCardOnGrid(GridData cardData, Vector2Int gridPosition)
+    public GridEntity SpawnEntityOnTile(GridEntity prefabToSpawn, GridData cardData, Vector2Int gridPosition)
     {
         // 1. Double check the tile exists
-        if (!_uiTiles.ContainsKey(gridPosition)) return;
+        if (!_uiTiles.ContainsKey(gridPosition)) return null;
 
         Tile targetTile = _uiTiles[gridPosition];
 
         // 2. Spawn the entity as a child of the tile so it perfectly overlaps
-        GridEntity newEntity = Instantiate(_entityPrefab, targetTile.transform);
+        GridEntity newEntity = Instantiate(prefabToSpawn, targetTile.transform);
         
         // 3. Initialize its data
         newEntity.Initialize(cardData, gridPosition, this);
+
+        return newEntity;
+    }
+
+    /// <summary>
+    /// Call this when the player drops a card from their hand onto a valid tile.
+    /// </summary>
+    public void PlaceCardOnGrid(GridData cardData, Vector2Int gridPosition)
+    {
+        // 1. Reuse our new modular spawner
+        GridEntity newCardEntity = SpawnEntityOnTile(_entityPrefab, cardData, gridPosition);
         
         // 4. Add it to our tracking list (Now delegated to the Logic Brain)
         // 5. Run the math! (Triggered automatically upon registration)
-        if (_combatLogic != null)
+        if (newCardEntity != null && _combatLogic != null)
         {
-            _combatLogic.RegisterEntity(newEntity);
+            _combatLogic.RegisterEntity(newCardEntity);
+        }
+    }
+
+    /// <summary>
+    /// Spawns a bouncing physics item on the grid and starts its independent loop.
+    /// Notice how we DO NOT register it to the _combatLogic!
+    /// </summary>
+    public void SpawnBouncingItem(GridData itemData, Vector2Int startPos)
+    {
+        if (_bouncingPrefab == null)
+        {
+            Debug.LogWarning("Missing bouncing prefab on GridUIManager!");
+            return;
+        }
+
+        // 1. Spawn it safely without triggering the math loop
+        GridEntity bouncer = SpawnEntityOnTile(_bouncingPrefab, itemData, startPos);
+
+        if (bouncer != null)
+        {
+            // 2. Grab the bouncing script and launch it
+            if (bouncer.TryGetComponent(out GridBouncingMovement bounceScript))
+            {
+                bounceScript.Launch(_linkedTurret, _currentGridData);
+            }
         }
     }
 
