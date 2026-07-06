@@ -39,4 +39,12 @@ public class KineticBouncerData : GridData
             Debug.Log($"*CLANG!* Bouncer hit a wall at {bouncePos}. Turret gained +{DamagePerBounce} Damage!");
         }
     }
+    
+    // THE MAGIC HAPPENS HERE: When the FSM starts the round, this Turret tells 
+    // the UI to spawn the bouncing prefab, but paints it with THIS Turret's data!
+    public override void OnRoundStart(GridUIManager uiManager, Vector2Int position)
+    {
+        // By passing 'this', the bouncing prefab becomes an exact extension of this card.
+        uiManager.SpawnBouncingItem(this, position);
+    }
 }

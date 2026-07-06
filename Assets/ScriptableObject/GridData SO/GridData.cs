@@ -19,4 +19,9 @@ public abstract class GridData : ScriptableObject
     public virtual void OnWallBounce(Vector2Int bouncePos, TurretGridData gridData, GridUIManager uiManager, Turret linkedTurret)
     {
     }
+    
+    public virtual void OnRoundStart(GridUIManager uiManager, Vector2Int position)
+    {
+
+    }
 }

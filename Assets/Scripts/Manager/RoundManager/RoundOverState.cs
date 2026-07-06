@@ -9,6 +9,8 @@ public class RoundOverState : RoundBaseState
         
         // Advance to the next round index for when we start again
         roundStateManager.currentRoundIndex++;
+        
+        RoundStateManager.TriggerRoundEnded();
     }
 
     public override void UpdateState(RoundStateManager roundStateManager)

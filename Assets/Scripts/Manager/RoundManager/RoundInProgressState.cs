@@ -18,6 +18,8 @@ public class RoundInProgressState : RoundBaseState
             
             // Start spawning
             _manager.enemySpawner.StartWave(currentWave);
+            
+            RoundStateManager.TriggerRoundStarted();
         }
         else
         {

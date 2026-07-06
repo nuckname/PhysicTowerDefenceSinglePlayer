@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class RoundStateManager : MonoBehaviour
@@ -13,6 +14,9 @@ public class RoundStateManager : MonoBehaviour
     public RoundOverState roundOverState = new RoundOverState();
     public RoundInProgressState roundInProgressState = new RoundInProgressState();
 
+    public static event Action OnRoundStarted;
+    public static event Action OnRoundEnded;
+    
     void Start()
     {
         currentState = roundOverState;
@@ -41,5 +45,15 @@ public class RoundStateManager : MonoBehaviour
             return rounds[currentRoundIndex];
         
         return null;
+    }
+    
+    public static void TriggerRoundStarted()
+    {
+        OnRoundStarted?.Invoke();
+    }
+
+    public static void TriggerRoundEnded()
+    {
+        OnRoundEnded?.Invoke();
     }
 }

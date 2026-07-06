@@ -10,7 +10,6 @@ using UnityEngine.InputSystem; // 1. ADDED NAMESPACE
 
 public class HorizontalCardHolder : MonoBehaviour
 {
-    // Updated to support canvas destruction/respawning without breaking the Singleton
     public static HorizontalCardHolder Instance { get; private set; }
 
     [SerializeField] private CardMovement selectedCardMovement;

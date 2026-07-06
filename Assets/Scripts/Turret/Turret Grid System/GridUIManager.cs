@@ -20,6 +20,8 @@ public class GridUIManager : MonoBehaviour
     [Header("Entity Management")]
     [SerializeField] private GridEntity _entityPrefab; // Drag your new Grid Entity UI Prefab here
     
+    private List<GridEntity> _activeBouncers = new List<GridEntity>();
+    
     // NEW: Add a slot for your bouncing prefab
     [SerializeField] private GridEntity _bouncingPrefab; 
     
@@ -203,23 +205,55 @@ public class GridUIManager : MonoBehaviour
     /// </summary>
     public void SpawnBouncingItem(GridData itemData, Vector2Int startPos)
     {
-        if (_bouncingPrefab == null)
-        {
-            Debug.LogWarning("Missing bouncing prefab on GridUIManager!");
-            return;
-        }
+        if (_bouncingPrefab == null) return;
 
-        // 1. Spawn it safely without triggering the math loop
         GridEntity bouncer = SpawnEntityOnTile(_bouncingPrefab, itemData, startPos);
 
         if (bouncer != null)
         {
-            // 2. Grab the bouncing script and launch it
             if (bouncer.TryGetComponent(out GridBouncingMovement bounceScript))
             {
                 bounceScript.Launch(_linkedTurret, _currentGridData);
+                
+                _activeBouncers.Add(bouncer); 
             }
         }
+    }
+    
+    private void OnEnable()
+    {
+        RoundStateManager.OnRoundStarted += HandleRoundStarted;
+        RoundStateManager.OnRoundEnded += HandleRoundEnded;
+    }
+
+    private void OnDisable()
+    {
+        RoundStateManager.OnRoundStarted -= HandleRoundStarted;
+        RoundStateManager.OnRoundEnded -= HandleRoundEnded;
+    }
+
+    private void HandleRoundStarted()
+    {
+        if (_currentGridData == null || _currentGridData.SavedCards == null) return;
+
+        // Ask every card currently on the board to do its Round Start logic
+        foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
+        {
+            savedCard.CardData.OnRoundStart(this, savedCard.GridPosition);
+        }
+    }
+
+    private void HandleRoundEnded()
+    {
+        // Destroy all bouncing orbs when the FSM enters RoundOverState
+        foreach (GridEntity bouncer in _activeBouncers)
+        {
+            if (bouncer != null)
+            {
+                Destroy(bouncer.gameObject);
+            }
+        }
+        _activeBouncers.Clear();
     }
 
     public void RecalculateBoard()
