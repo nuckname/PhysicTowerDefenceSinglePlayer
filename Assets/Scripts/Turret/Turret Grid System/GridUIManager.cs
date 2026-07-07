@@ -107,7 +107,7 @@ public class GridUIManager : MonoBehaviour
         foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
         {
             // We can now use our new modular spawner here too!
-            GridEntity loadedEntity = SpawnEntityOnTile(_entityPrefab, savedCard.CardData, savedCard.GridPosition);
+            GridEntity loadedEntity = SpawnEntityOnTile(_entityPrefab, savedCard.CardData, savedCard.GridPosition, true);
             
             if (loadedEntity != null)
             {
@@ -166,18 +166,23 @@ public class GridUIManager : MonoBehaviour
     /// Handles the physical instantiation and parenting of ANY entity onto a grid tile.
     /// Does NOT trigger combat math. Safe for visual effects, lasers, and bouncing items.
     /// </summary>
-    public GridEntity SpawnEntityOnTile(GridEntity prefabToSpawn, GridData cardData, Vector2Int gridPosition)
+    public GridEntity SpawnEntityOnTile(GridEntity prefabToSpawn, GridData cardData, Vector2Int gridPosition, bool occupyTile = false)
     {
-        // 1. Double check the tile exists
+        // Double check the tile exists
         if (!_uiTiles.ContainsKey(gridPosition)) return null;
 
         Tile targetTile = _uiTiles[gridPosition];
 
-        // 2. Spawn the entity as a child of the tile so it perfectly overlaps
+        // Spawn the entity as a child of the tile so it perfectly overlaps
         GridEntity newEntity = Instantiate(prefabToSpawn, targetTile.transform);
         
-        // 3. Initialize its data
+        // Initialize its data
         newEntity.Initialize(cardData, gridPosition, this);
+
+        if (occupyTile)
+        {
+            targetTile.SetOccupied(true);
+        }
 
         return newEntity;
     }
@@ -187,11 +192,9 @@ public class GridUIManager : MonoBehaviour
     /// </summary>
     public void PlaceCardOnGrid(GridData cardData, Vector2Int gridPosition)
     {
-        // 1. Reuse our new modular spawner
-        GridEntity newCardEntity = SpawnEntityOnTile(_entityPrefab, cardData, gridPosition);
+        // 1. Reuse our modular spawner, but pass TRUE to occupy the tile!
+        GridEntity newCardEntity = SpawnEntityOnTile(_entityPrefab, cardData, gridPosition, true);
         
-        // 4. Add it to our tracking list (Now delegated to the Logic Brain)
-        // 5. Run the math! (Triggered automatically upon registration)
         if (newCardEntity != null && _combatLogic != null)
         {
             _linkedTurret.PendingCards.Remove(cardData);
@@ -218,6 +221,37 @@ public class GridUIManager : MonoBehaviour
                 _activeBouncers.Add(bouncer); 
             }
         }
+    }
+    
+    /// <summary>
+    /// NEW: The master function for moving an entity on the grid.
+    /// Your GridEntityMovement script should call THIS when the player drags a placed card.
+    /// </summary>
+    public bool MoveEntity(GridEntity entityToMove, Vector2Int newPosition)
+    {
+        // 1. Check if the target is valid and empty
+        if (!_uiTiles.ContainsKey(newPosition) || _uiTiles[newPosition].IsOccupied)
+        {
+            return false; // Move failed
+        }
+
+        // 2. Free up the OLD tile
+        if (_uiTiles.ContainsKey(entityToMove.CurrentGridPosition))
+        {
+            _uiTiles[entityToMove.CurrentGridPosition].SetOccupied(false);
+        }
+
+        // 3. Occupy the NEW tile
+        _uiTiles[newPosition].SetOccupied(true);
+
+        // 4. Update the entity's data and visual parent
+        entityToMove.SetGridPosition(newPosition);
+        entityToMove.transform.SetParent(_uiTiles[newPosition].transform, false);
+
+        // 5. Recalculate the board math now that a piece has moved
+        RecalculateBoard();
+
+        return true;
     }
     
     private void OnEnable()
@@ -260,7 +294,7 @@ public class GridUIManager : MonoBehaviour
         {
             foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
             {
-                if(_gridCombatLogic.ActiveEntities is IRoundListener iRoundListener)
+                if(entity.MyCardData is IRoundListener iRoundListener)
                 {
                     // Turn the visual UI card back on
                     entity.gameObject.SetActive(true);

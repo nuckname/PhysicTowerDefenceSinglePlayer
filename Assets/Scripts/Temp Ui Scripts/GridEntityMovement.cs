@@ -253,29 +253,28 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
             Tile hitTile = result.gameObject.GetComponent<Tile>();
             if (hitTile != null)
             {
-                // Check if the tile is empty (doesn't have another GridEntity sitting on it)
-                GridEntity occupyingEntity = hitTile.GetComponentInChildren<GridEntity>();
-                
-                if (occupyingEntity == null || occupyingEntity == _gridEntity)
+                // Try to let the Grid Manager handle the move logic
+                if (_gridEntity.MyGridManager != null)
                 {
-                    // Success! Snap to the new tile
-                    transform.SetParent(hitTile.transform);
-                    transform.DOLocalMove(Vector3.zero, 0.2f).SetEase(Ease.OutBack);
+                    // This one line replaces all the manual IsOccupied checks, 
+                    // reparenting, position setting, and board recalculations!
+                    bool moveSuccessful = _gridEntity.MyGridManager.MoveEntity(_gridEntity, hitTile.Position);
                     
-                    _gridEntity.SetGridPosition(hitTile.Position);
-                    
-                    // Tell the manager the board changed!
-                    if (_gridEntity.MyGridManager != null) _gridEntity.MyGridManager.RecalculateBoard();
-                    
-                    return true;
+                    if (moveSuccessful)
+                    {
+                        // The manager successfully moved us. All we have to do is 
+                        // play the visual juice to snap it into the exact center!
+                        transform.DOLocalMove(Vector3.zero, 0.2f).SetEase(Ease.OutBack);
+                        return true;
+                    }
                 }
             }
         }
 
-        // If we want to add "Return to Hand" logic, it would go right here!
+        // If we missed a tile, or the tile was occupied (moveSuccessful == false),
+        // we return false so OnEndDrag bounces the card back to its original spot.
         return false;
     }
-
     private void RotateVisualsAndData(bool clockwise)
     {
         // 1. Math & Visual Rotation

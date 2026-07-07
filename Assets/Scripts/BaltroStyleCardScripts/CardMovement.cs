@@ -207,9 +207,7 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
     }
 
-    // ==========================================
-    // NEW: The core logic for checking the UI Grid beneath the mouse
-    // ==========================================
+    // Card to Grid can we place it on this tile?
     private bool AttemptPlayOnGrid(PointerEventData eventData)
     {
         if (eventData == null || CardData == null) return false;
@@ -224,6 +222,13 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             Tile hitTile = result.gameObject.GetComponent<Tile>();
             if (hitTile != null)
             {
+                // NEW: Stop if the tile is already occupied!
+                if (hitTile.IsOccupied)
+                {
+                    Debug.Log($"Cannot place {CardData.gridName}, tile {hitTile.Position} is occupied!");
+                    return false; // Or 'continue;' if you want the raycast to look for other tiles behind it
+                }
+
                 GridUIManager gridManager = FindAnyObjectByType<GridUIManager>();
                 if (gridManager != null)
                 {
