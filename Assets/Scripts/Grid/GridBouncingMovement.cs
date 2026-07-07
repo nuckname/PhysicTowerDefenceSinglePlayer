@@ -80,7 +80,10 @@ public class GridBouncingMovement : MonoBehaviour
         // If we hit any wall or corner, tell the GridData so it can trigger its override effect!
         if (hitWallX || hitWallY || cornerHit)
         {
-            _entity.MyCardData.OnWallBounce(currentPos, _gridData, uiManager, _linkedTurret);
+            if (_entity.MyCardData is IWallBouncer bouncerCard)
+            {
+                bouncerCard.OnWallBounce(currentPos, _gridData, uiManager, _linkedTurret);
+            }
         }
 
         // Update Entity Data

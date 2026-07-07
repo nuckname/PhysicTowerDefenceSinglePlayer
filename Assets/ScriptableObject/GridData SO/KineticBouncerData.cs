@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Kinetic Bouncer", menuName = "Grid System/Cards/Kinetic Bouncer")]
-public class KineticBouncerData : GridData
+public class KineticBouncerData : GridData, IWallBouncer, IRoundListener
 {
     [Header("Bounce Specifics")]
     [Tooltip("How much damage to grant the turret every time this hits a wall.")]
@@ -20,7 +20,7 @@ public class KineticBouncerData : GridData
     }
 
     // THIS is our custom trigger whenever the movement script detects a wall or corner
-    public override void OnWallBounce(Vector2Int bouncePos, TurretGridData gridData, GridUIManager uiManager, Turret linkedTurret)
+    public void OnWallBounce(Vector2Int bouncePos, TurretGridData gridData, GridUIManager uiManager, Turret linkedTurret)
     {
         List<StatModifier> bounceModifiers = new List<StatModifier>();
         
@@ -42,7 +42,7 @@ public class KineticBouncerData : GridData
     
     // THE MAGIC HAPPENS HERE: When the FSM starts the round, this Turret tells 
     // the UI to spawn the bouncing prefab, but paints it with THIS Turret's data!
-    public override void OnRoundStart(GridUIManager uiManager, GridEntity sourceEntity)
+    public void OnRoundStart(GridUIManager uiManager, GridEntity sourceEntity)
     {
         // Spawn the bouncing prefab at the entity's current location
         uiManager.SpawnBouncingItem(this, sourceEntity.CurrentGridPosition);
@@ -50,5 +50,10 @@ public class KineticBouncerData : GridData
         // Hide the static UI card so it looks like it "transformed" into the orb!
         // (Setting the GameObject to false hides it and prevents it from being clicked/dragged)
         sourceEntity.gameObject.SetActive(false); 
+    }
+
+    public void OnRoundEnd(GridUIManager uiManager, GridEntity sourceEntity)
+    {
+        // Added to satisfy the IRoundListener contract. Leave blank if not needed!
     }
 }

@@ -12,19 +12,6 @@ public abstract class GridData : ScriptableObject
 
     public virtual void SpawnVisuals(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, GridUIManager uiManager, List<GameObject> spawnedVisualsTracker)
     {
-    }
-
-    // Virtual method to handle wall bounces.
-    // We pass in everything the card might need to calculate a cool effect.
-    public virtual void OnWallBounce(Vector2Int bouncePos, TurretGridData gridData, GridUIManager uiManager, Turret linkedTurret)
-    {
-    }
-    
-    public virtual void OnRoundStart(GridUIManager uiManager, GridEntity sourceEntity)
-    {
-    }
-
-    public virtual void OnRoundEnd(GridUIManager uiManager, GridEntity sourceEntity)
-    {
+        
     }
 }

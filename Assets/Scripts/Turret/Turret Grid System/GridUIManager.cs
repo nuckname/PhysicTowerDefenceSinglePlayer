@@ -239,8 +239,10 @@ public class GridUIManager : MonoBehaviour
         // Loop through the ACTUAL spawned entities on the board
         foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
         {
-            // Tell the card the round started and pass the physical entity!
-            entity.MyCardData.OnRoundStart(this, entity);
+            if(entity.MyCardData is IRoundListener iRoundListener)
+            {
+                iRoundListener.OnRoundStart(this, entity);
+            }
         }
     }
 
@@ -258,11 +260,15 @@ public class GridUIManager : MonoBehaviour
         {
             foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
             {
-                // Turn the visual UI card back on
-                entity.gameObject.SetActive(true);
+                if(_gridCombatLogic.ActiveEntities is IRoundListener iRoundListener)
+                {
+                    // Turn the visual UI card back on
+                    entity.gameObject.SetActive(true);
                 
-                // Trigger the end round event just in case any cards need it
-                entity.MyCardData.OnRoundEnd(this, entity); 
+                    // Trigger the end round event just in case any cards need it
+                    iRoundListener.OnRoundEnd(this, entity); 
+                }
+
             }
         }
     }
