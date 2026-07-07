@@ -207,40 +207,38 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
     }
 
-    // Card to Grid can we place it on this tile?
     private bool AttemptPlayOnGrid(PointerEventData eventData)
     {
         if (eventData == null || CardData == null) return false;
 
-        // Fire a raycast through all UI elements under the mouse
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
 
         foreach (RaycastResult result in results)
         {
-            // Check if we hit a specific UI Tile
             Tile hitTile = result.gameObject.GetComponent<Tile>();
             if (hitTile != null)
             {
-                // NEW: Stop if the tile is already occupied!
-                if (hitTile.IsOccupied)
+                GridPlacementManager placementManager = FindAnyObjectByType<GridPlacementManager>();
+                
+                if (placementManager != null)
                 {
-                    Debug.Log($"Cannot place {CardData.gridName}, tile {hitTile.Position} is occupied!");
-                    return false; // Or 'continue;' if you want the raycast to look for other tiles behind it
-                }
-
-                GridUIManager gridManager = FindAnyObjectByType<GridUIManager>();
-                if (gridManager != null)
-                {
-                    gridManager.PlaceCardOnGrid(CardData, hitTile.Position);
+                    bool placed = placementManager.TryPlaceCardFromHand(CardData, hitTile.Position);
                     
-                    Debug.Log($"Dropped {CardData.gridName} onto UI Grid!");
-                    SuccessfulPlay();
-                    return true;
+                    if (placed)
+                    {
+                        Debug.Log($"Dropped {CardData.gridName} onto UI Grid!");
+                        SuccessfulPlay();
+                        return true;
+                    }
+                    else
+                    {
+                        Debug.Log("Tile was occupied or invalid!");
+                        return false;
+                    }
                 }
             }
         }
-
         return false;
     }
 

@@ -40,20 +40,15 @@ public class KineticBouncerData : GridData, IWallBouncer, IRoundListener
         }
     }
     
-    // THE MAGIC HAPPENS HERE: When the FSM starts the round, this Turret tells 
-    // the UI to spawn the bouncing prefab, but paints it with THIS Turret's data!
-    public void OnRoundStart(GridUIManager uiManager, GridEntity sourceEntity)
+    public void OnRoundStart(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity)
     {
-        // Spawn the bouncing prefab at the entity's current location
-        uiManager.SpawnBouncingItem(this, sourceEntity.CurrentGridPosition);
-
-        // Hide the static UI card so it looks like it "transformed" into the orb!
-        // (Setting the GameObject to false hides it and prevents it from being clicked/dragged)
+        placementManager.SpawnBouncingItem(this, sourceEntity.CurrentGridPosition, gridData);
+        
         sourceEntity.gameObject.SetActive(false); 
     }
 
-    public void OnRoundEnd(GridUIManager uiManager, GridEntity sourceEntity)
+    public void OnRoundEnd(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity)
     {
-        // Added to satisfy the IRoundListener contract. Leave blank if not needed!
+        // Added to satisfy the IRoundListener contract.
     }
 }

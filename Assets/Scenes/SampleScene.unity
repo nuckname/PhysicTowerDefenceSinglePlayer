@@ -451,6 +451,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
   - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
   - {fileID: 11400000, guid: baaddcdc1b8985948ad5f4f58988a7b0, type: 2}
+--- !u!114 &302614062 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3944696098150003259, guid: 8ae4f8f1d66773e4da56efa434aa9bc7, type: 3}
+  m_PrefabInstance: {fileID: 905900425}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7436d0de91a073148a058a7c6b93b269, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GridUIManager
 --- !u!1 &303000450
 GameObject:
   m_ObjectHideFlags: 0
@@ -1439,6 +1450,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 514158162}
   m_CullTransparentMesh: 1
+--- !u!1 &519624844
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 519624845}
+  - component: {fileID: 519624846}
+  m_Layer: 0
+  m_Name: GridPlacementManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &519624845
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519624844}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 889824034}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519624846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519624844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8c55446389234a4db622eecbaacb8bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  _gridUiManager: {fileID: 302614062}
+  _girdCombatLogic: {fileID: 939732415}
+  DefaultEntityPrefab: {fileID: 5236309299279783787, guid: 39ad6971e48b31748bca2800d50f574e, type: 3}
+  BouncingPrefab: {fileID: 5236309299279783787, guid: 81c11df537ecd4338b67ee7d078556b1, type: 3}
 --- !u!1 &532652339
 GameObject:
   m_ObjectHideFlags: 0
@@ -2152,6 +2211,7 @@ Transform:
   - {fileID: 395251561}
   - {fileID: 1060018276}
   - {fileID: 172898946}
+  - {fileID: 519624845}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &905900425

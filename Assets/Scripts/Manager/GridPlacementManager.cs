@@ -1,21 +1,22 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class GridPlacementManager : MonoBehaviour
 {
-    [Header("Dependencies")]
-    [SerializeField] private GridUIManager _uiManager;
-    [SerializeField] private GridCombatLogic _combatLogic;
-    
     [Header("Prefabs")]
-    public GridEntity DefaultEntityPrefab; // Moved from UIManager
-    public GridEntity BouncingPrefab;      // Moved from UIManager
+    public GridEntity DefaultEntityPrefab; 
+    public GridEntity BouncingPrefab;      
 
+    // Cached references
+    private GridUIManager _uiManager;
+    private GridCombatLogic _combatLogic;
     private Turret _linkedTurret;
 
-    public void Initialize(Turret linkedTurret)
+    // Called by GridUIManager when the UI opens
+    public void Initialize(Turret linkedTurret, GridUIManager uiManager, GridCombatLogic combatLogic)
     {
         _linkedTurret = linkedTurret;
+        _uiManager = uiManager;
+        _combatLogic = combatLogic;
     }
 
     /// <summary>
@@ -44,13 +45,10 @@ public class GridPlacementManager : MonoBehaviour
     {
         Tile targetTile = _uiManager.GetTileAt(gridPosition);
         
-        // 1. Validate the drop
         if (targetTile == null || targetTile.IsOccupied) return false;
 
-        // 2. Spawn and occupy
         GridEntity newCardEntity = SpawnEntityOnTile(DefaultEntityPrefab, cardData, gridPosition, true);
         
-        // 3. Update logic
         if (newCardEntity != null && _combatLogic != null)
         {
             _linkedTurret.PendingCards.Remove(cardData);
@@ -68,21 +66,16 @@ public class GridPlacementManager : MonoBehaviour
     {
         Tile targetTile = _uiManager.GetTileAt(newPosition);
         
-        // 1. Validate the move
         if (targetTile == null || targetTile.IsOccupied) return false;
 
-        // 2. Free up the OLD tile
         Tile oldTile = _uiManager.GetTileAt(entityToMove.CurrentGridPosition);
         if (oldTile != null) oldTile.SetOccupied(false);
 
-        // 3. Occupy the NEW tile
         targetTile.SetOccupied(true);
 
-        // 4. Update the entity's data and visual parent
         entityToMove.SetGridPosition(newPosition);
         entityToMove.transform.SetParent(targetTile.transform, false);
 
-        // 5. Tell the logic to recalculate
         _combatLogic.RecalculateBoard();
 
         return true;
@@ -95,11 +88,12 @@ public class GridPlacementManager : MonoBehaviour
     {
         if (BouncingPrefab == null) return null;
 
-        GridEntity bouncer = SpawnEntityOnTile(BouncingPrefab, itemData, startPos, false); // Bouncers don't occupy!
+        GridEntity bouncer = SpawnEntityOnTile(BouncingPrefab, itemData, startPos, false); 
         
         if (bouncer != null && bouncer.TryGetComponent(out GridBouncingMovement bounceScript))
         {
             bounceScript.Launch(_linkedTurret, currentGridData);
+            _uiManager.TrackBouncer(bouncer); // Hand the bouncer over to the UI manager for destruction at round end
         }
 
         return bouncer;

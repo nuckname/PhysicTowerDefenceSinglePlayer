@@ -2,56 +2,52 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+// NEW: This forces Unity to add these scripts automatically. No more missing component errors!
+[RequireComponent(typeof(GridPlacementManager))] 
+[RequireComponent(typeof(GridCombatLogic))]
 public class GridUIManager : MonoBehaviour 
 {
     [SerializeField] private int _width, _height;
     [SerializeField] private Tile _tilePrefab;
-    [SerializeField] private Transform _gridParent; // e.g., a Canvas Panel with a GridLayoutGroup
+    [SerializeField] private Transform _gridParent; 
 
     private Dictionary<Vector2Int, Tile> _uiTiles;
 
     [Header("Grid Layout Settings")]
-    [SerializeField] private float _tileSize = 100f; // The width/height of your UI Image
-    [SerializeField] private Vector2 _gridOffset; // Manual tweak to shift the whole grid
+    [SerializeField] private float _tileSize = 100f; 
+    [SerializeField] private Vector2 _gridOffset; 
     
     [Header("Inventory Setup")]
     public HorizontalCardHolder inventoryCardHolder;
 
-    [Header("Entity Management")]
-    [SerializeField] private GridEntity _entityPrefab; // Drag your new Grid Entity UI Prefab here
-    
     private List<GridEntity> _activeBouncers = new List<GridEntity>();
     
-    // NEW: Add a slot for your bouncing prefab
-    [SerializeField] private GridEntity _bouncingPrefab; 
-    
-    [Header("Dependencies")]
-    [SerializeField] private GridCombatLogic _combatLogic; // Drag your Turret's combat logic component here
-
     private TurretGridData _currentGridData;
     
     public int GridWidth => _width;
     public int GridHeight => _height;
+    public TurretGridData CurrentGridData => _currentGridData; // Public getter for the cards!
     
+    private GridPlacementManager _gridPlacementManager;
     private GridCombatLogic _gridCombatLogic;
-    private Turret _linkedTurret; // We need to store this so the bouncing item can access it
+    private Turret _linkedTurret; 
     
     private void Awake()
     {
+        // Grab sibling components automatically
+        _gridPlacementManager = GetComponent<GridPlacementManager>();
         _gridCombatLogic = GetComponent<GridCombatLogic>();
     }
 
-    // We remove the Awake/Instance setup. 
-    // This is now called right after we Instantiate the prefab.
     public void InitializeAndLoadGrid(TurretGridData MyGridData, List<GridData> pendingCards, Turret myTurret) 
     {
-        _linkedTurret = myTurret; // Store it for later
+        _linkedTurret = myTurret; 
 
-        // Pass the raw data and dimensions over to the logic brain
-        if (_combatLogic != null)
-        {
-            _combatLogic.InitializeGridLogic(MyGridData, this, myTurret);
-        }
+        // 1. INITIALIZE THE PLACEMENT MANAGER (This was missing and causing errors!)
+        _gridPlacementManager.Initialize(myTurret, this, _gridCombatLogic);
+
+        // 2. Initialize Combat Logic
+        _gridCombatLogic.InitializeGridLogic(MyGridData, this, myTurret);
 
         _currentGridData = MyGridData;
 
@@ -62,16 +58,13 @@ public class GridUIManager : MonoBehaviour
             inventoryCardHolder.LoadHand(pendingCards);
         }
         
-        // Safety check
         if (MyGridData == null || MyGridData.TileStates == null) return;
 
-        // Loop through the UI tiles and update them based on the saved data
         foreach (var kvp in _uiTiles)
         {
             Vector2Int pos = kvp.Key;
             Tile tileUI = kvp.Value;
             
-            // Check if the turret has data for this position
             if (MyGridData.TileStates.TryGetValue(pos, out int stateValue))
             {
                 tileUI.SetState(stateValue);
@@ -85,9 +78,6 @@ public class GridUIManager : MonoBehaviour
         LoadSavedBoardState();
     }
     
-    /// <summary>
-    /// Returns the transform of a specific UI tile so we can parent entities to it.
-    /// </summary>
     public Transform GetTileTransform(Vector2Int gridPosition)
     {
         if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition))
@@ -97,40 +87,41 @@ public class GridUIManager : MonoBehaviour
         return null;
     }
     
-    /// <summary>
-    /// Reads the saved data from the turret and automatically repopulates the visual UI board.
-    /// </summary>
+    public Tile GetTileAt(Vector2Int gridPosition)
+    {
+        if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition))
+        {
+            return _uiTiles[gridPosition];
+        }
+        return null;
+    }
+
     private void LoadSavedBoardState()
     {
         if (_currentGridData == null || _currentGridData.SavedCards == null) return;
 
         foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
         {
-            // We can now use our new modular spawner here too!
-            GridEntity loadedEntity = SpawnEntityOnTile(_entityPrefab, savedCard.CardData, savedCard.GridPosition, true);
+            // NEW: Pull the default prefab directly from the placement manager
+            GridEntity loadedEntity = _gridPlacementManager.SpawnEntityOnTile(
+                _gridPlacementManager.DefaultEntityPrefab, 
+                savedCard.CardData, 
+                savedCard.GridPosition, 
+                true
+            );
             
             if (loadedEntity != null)
             {
-                // 4. Force the rotation/direction to match what was saved
-                // Assuming you add a quick setter in your GridEntity script:
                 loadedEntity.SetDirection(savedCard.Direction); 
-                
-                // 5. Register it with the combat logic
-                if (_combatLogic != null)
-                {
-                    _combatLogic.RegisterEntity(loadedEntity);
-                }
+                _gridCombatLogic.RegisterEntity(loadedEntity);
             }
         }
     }
-
 
     private void GenerateUIGrid() 
     {
         _uiTiles = new Dictionary<Vector2Int, Tile>();
 
-        // 1. Calculate the starting X and Y so the entire grid is perfectly centered 
-        // around the _gridParent's pivot point, applying your manual offset on top.
         float startX = -(_width * _tileSize) / 2f + (_tileSize / 2f) + _gridOffset.x;
         float startY = -(_height * _tileSize) / 2f + (_tileSize / 2f) + _gridOffset.y;
 
@@ -141,14 +132,12 @@ public class GridUIManager : MonoBehaviour
                 var spawnedTile = Instantiate(_tilePrefab, _gridParent);
                 spawnedTile.name = $"UI Tile {x} {y}";
 
-                // 2. Grab the RectTransform and apply the calculated position
                 RectTransform rect = spawnedTile.GetComponent<RectTransform>();
                 rect.anchoredPosition = new Vector2(
                     startX + (x * _tileSize), 
                     startY + (y * _tileSize)
                 );
 
-                // 3. Standard init logic
                 var isOffset = (x % 2 == 0 && y % 2 != 0) || (x % 2 != 0 && y % 2 == 0);
                 Vector2Int pos = new Vector2Int(x, y);
                 spawnedTile.Init(isOffset, pos);
@@ -156,102 +145,6 @@ public class GridUIManager : MonoBehaviour
                 _uiTiles[pos] = spawnedTile;
             }
         }
-    }
-
-    // ==========================================
-    // NEW ENTITY & MATH LOGIC
-    // ==========================================
-
-    /// <summary>
-    /// Handles the physical instantiation and parenting of ANY entity onto a grid tile.
-    /// Does NOT trigger combat math. Safe for visual effects, lasers, and bouncing items.
-    /// </summary>
-    public GridEntity SpawnEntityOnTile(GridEntity prefabToSpawn, GridData cardData, Vector2Int gridPosition, bool occupyTile = false)
-    {
-        // Double check the tile exists
-        if (!_uiTiles.ContainsKey(gridPosition)) return null;
-
-        Tile targetTile = _uiTiles[gridPosition];
-
-        // Spawn the entity as a child of the tile so it perfectly overlaps
-        GridEntity newEntity = Instantiate(prefabToSpawn, targetTile.transform);
-        
-        // Initialize its data
-        newEntity.Initialize(cardData, gridPosition, this);
-
-        if (occupyTile)
-        {
-            targetTile.SetOccupied(true);
-        }
-
-        return newEntity;
-    }
-
-    /// <summary>
-    /// Call this when the player drops a card from their hand onto a valid tile.
-    /// </summary>
-    public void PlaceCardOnGrid(GridData cardData, Vector2Int gridPosition)
-    {
-        // 1. Reuse our modular spawner, but pass TRUE to occupy the tile!
-        GridEntity newCardEntity = SpawnEntityOnTile(_entityPrefab, cardData, gridPosition, true);
-        
-        if (newCardEntity != null && _combatLogic != null)
-        {
-            _linkedTurret.PendingCards.Remove(cardData);
-            _combatLogic.RegisterEntity(newCardEntity);
-        }
-    }
-
-    /// <summary>
-    /// Spawns a bouncing physics item on the grid and starts its independent loop.
-    /// Notice how we DO NOT register it to the _combatLogic!
-    /// </summary>
-    public void SpawnBouncingItem(GridData itemData, Vector2Int startPos)
-    {
-        if (_bouncingPrefab == null) return;
-
-        GridEntity bouncer = SpawnEntityOnTile(_bouncingPrefab, itemData, startPos);
-
-        if (bouncer != null)
-        {
-            if (bouncer.TryGetComponent(out GridBouncingMovement bounceScript))
-            {
-                bounceScript.Launch(_linkedTurret, _currentGridData);
-                
-                _activeBouncers.Add(bouncer); 
-            }
-        }
-    }
-    
-    /// <summary>
-    /// NEW: The master function for moving an entity on the grid.
-    /// Your GridEntityMovement script should call THIS when the player drags a placed card.
-    /// </summary>
-    public bool MoveEntity(GridEntity entityToMove, Vector2Int newPosition)
-    {
-        // 1. Check if the target is valid and empty
-        if (!_uiTiles.ContainsKey(newPosition) || _uiTiles[newPosition].IsOccupied)
-        {
-            return false; // Move failed
-        }
-
-        // 2. Free up the OLD tile
-        if (_uiTiles.ContainsKey(entityToMove.CurrentGridPosition))
-        {
-            _uiTiles[entityToMove.CurrentGridPosition].SetOccupied(false);
-        }
-
-        // 3. Occupy the NEW tile
-        _uiTiles[newPosition].SetOccupied(true);
-
-        // 4. Update the entity's data and visual parent
-        entityToMove.SetGridPosition(newPosition);
-        entityToMove.transform.SetParent(_uiTiles[newPosition].transform, false);
-
-        // 5. Recalculate the board math now that a piece has moved
-        RecalculateBoard();
-
-        return true;
     }
     
     private void OnEnable()
@@ -270,39 +163,32 @@ public class GridUIManager : MonoBehaviour
     {
         if (_gridCombatLogic == null) return;
 
-        // Loop through the ACTUAL spawned entities on the board
         foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
         {
             if(entity.MyCardData is IRoundListener iRoundListener)
             {
-                iRoundListener.OnRoundStart(this, entity);
+                iRoundListener.OnRoundStart(_gridPlacementManager, _currentGridData, entity);
             }
         }
     }
 
     private void HandleRoundEnded()
     {
-        // 1. Destroy all the bouncing orbs
         foreach (GridEntity bouncer in _activeBouncers)
         {
             if (bouncer != null) Destroy(bouncer.gameObject);
         }
         _activeBouncers.Clear();
 
-        // 2. Loop through all the hidden base entities and turn them back on!
         if (_gridCombatLogic != null)
         {
             foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
             {
                 if(entity.MyCardData is IRoundListener iRoundListener)
                 {
-                    // Turn the visual UI card back on
                     entity.gameObject.SetActive(true);
-                
-                    // Trigger the end round event just in case any cards need it
-                    iRoundListener.OnRoundEnd(this, entity); 
+                    iRoundListener.OnRoundEnd(_gridPlacementManager, _currentGridData, entity); 
                 }
-
             }
         }
     }
@@ -310,5 +196,11 @@ public class GridUIManager : MonoBehaviour
     public void RecalculateBoard()
     {
         _gridCombatLogic.RecalculateBoard();
+    }
+    
+    // NEW: Allow the Placement Manager to track active bouncers securely
+    public void TrackBouncer(GridEntity bouncer)
+    {
+        _activeBouncers.Add(bouncer);
     }
 }

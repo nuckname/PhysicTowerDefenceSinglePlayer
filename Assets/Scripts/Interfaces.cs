@@ -9,6 +9,6 @@ public interface IWallBouncer
 
 public interface IRoundListener
 {
-    void OnRoundStart(GridUIManager uiManager, GridEntity sourceEntity);
-    void OnRoundEnd(GridUIManager uiManager, GridEntity sourceEntity);
+    void OnRoundStart(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity);
+    void OnRoundEnd(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity);
 }

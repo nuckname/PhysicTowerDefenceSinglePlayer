@@ -242,7 +242,6 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
     // ==========================================
     // GRID LOGIC
     // ==========================================
-
     private bool AttemptMoveToNewTile(PointerEventData eventData)
     {
         List<RaycastResult> results = new List<RaycastResult>();
@@ -253,28 +252,24 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
             Tile hitTile = result.gameObject.GetComponent<Tile>();
             if (hitTile != null)
             {
-                // Try to let the Grid Manager handle the move logic
-                if (_gridEntity.MyGridManager != null)
+                GridPlacementManager placementManager = FindAnyObjectByType<GridPlacementManager>();
+                if (placementManager != null)
                 {
-                    // This one line replaces all the manual IsOccupied checks, 
-                    // reparenting, position setting, and board recalculations!
-                    bool moveSuccessful = _gridEntity.MyGridManager.MoveEntity(_gridEntity, hitTile.Position);
+                    // NEW: Ask the manager to handle the move
+                    bool moveSuccessful = placementManager.TryMoveExistingEntity(_gridEntity, hitTile.Position);
                     
                     if (moveSuccessful)
                     {
-                        // The manager successfully moved us. All we have to do is 
-                        // play the visual juice to snap it into the exact center!
+                        // The manager handled the data and hierarchy, just play the juice!
                         transform.DOLocalMove(Vector3.zero, 0.2f).SetEase(Ease.OutBack);
                         return true;
                     }
                 }
             }
         }
-
-        // If we missed a tile, or the tile was occupied (moveSuccessful == false),
-        // we return false so OnEndDrag bounces the card back to its original spot.
-        return false;
+        return false; // Bounce back to original spot
     }
+    
     private void RotateVisualsAndData(bool clockwise)
     {
         // 1. Math & Visual Rotation
