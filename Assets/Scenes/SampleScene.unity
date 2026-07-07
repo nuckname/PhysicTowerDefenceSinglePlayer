@@ -291,6 +291,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayingCardGroup
       objectReference: {fileID: 0}
+    - target: {fileID: 3002825497996913973, guid: 59ca4f5e794db9a43a54475ed7ee13d7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3329801164774111922, guid: 59ca4f5e794db9a43a54475ed7ee13d7, type: 3}
       propertyPath: slotPrefab
       value: 
@@ -383,6 +387,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8435867485320735339, guid: 59ca4f5e794db9a43a54475ed7ee13d7, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -471,7 +479,7 @@ Transform:
   m_GameObject: {fileID: 303000450}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.83, y: 0.35, z: -3.65}
+  m_LocalPosition: {x: -2.83, y: 0.35, z: -3.6}
   m_LocalScale: {x: 8.945971, y: 2.5924, z: 2.9522}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3413,7 +3421,7 @@ Transform:
   m_GameObject: {fileID: 1881831412}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.78, y: 0.6, z: -0.27999997}
+  m_LocalPosition: {x: -3.63, y: 0.6, z: -0.43}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
