@@ -47,6 +47,20 @@ public class GridEntity : MonoBehaviour
             movementScript.ResetMovementState();
         }
     }
+    
+    // Maybe we turn this off instead or something??
+    private void OnDestroy()
+    {
+        // Auto-free the tile if this entity is destroyed 
+        if (MyGridManager != null)
+        {
+            Tile myTile = MyGridManager.GetTileAt(CurrentGridPosition);
+            if (myTile != null && myTile.OccupyingEntity == this)
+            {
+                myTile.SetOccupied(false, null);
+            }
+        }
+    }
 
     // Helper method for the movement script to update the grid position safely
     public void SetGridPosition(Vector2Int newPos)

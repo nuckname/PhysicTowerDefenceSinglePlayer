@@ -14,6 +14,7 @@ public class Tile : MonoBehaviour
     [SerializeField] private Color _blockedColor = Color.red;
     
     public bool IsOccupied { get; private set; } = false;
+    public GridEntity OccupyingEntity { get; private set; }
     
     // Add a reference to know where this tile is on the grid
     public Vector2Int Position { get; private set; }
@@ -29,9 +30,10 @@ public class Tile : MonoBehaviour
         ResetState();
     }
     
-    public void SetOccupied(bool isOccupied)
+    public void SetOccupied(bool isOccupied, GridEntity entity = null)
     {
         IsOccupied = isOccupied;
+        OccupyingEntity = entity;
     }
     
     public void SetState(int stateValue)

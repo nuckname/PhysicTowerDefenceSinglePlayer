@@ -12,3 +12,16 @@ public interface IRoundListener
     void OnRoundStart(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity);
     void OnRoundEnd(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity);
 }
+
+public interface IEntityCollision
+{
+    /// <summary>
+    /// Defines if this entity acts as a solid wall that bouncers reflect off of.
+    /// </summary>
+    bool IsSolidWall();
+
+    /// <summary>
+    /// Triggered when an active entity (like a Bouncer) moves onto this entity's tile.
+    /// </summary>
+    void OnHitByEntity(GridEntity activeEntity, GridEntity stationaryEntity, Turret linkedTurret);
+}

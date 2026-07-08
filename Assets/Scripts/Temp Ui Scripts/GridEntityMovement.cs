@@ -233,6 +233,7 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         StartCoroutine(FrameWait());
     }
 
+    
     private IEnumerator FrameWait()
     {
         yield return new WaitForEndOfFrame();
