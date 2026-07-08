@@ -54,19 +54,19 @@ public class GridBouncingMovement : MonoBehaviour
         bool hitWallY = false;
         bool cornerHit = false;
 
-        if (nextX < 0 || nextX >= uiManager.GridWidth || IsTileSolid(new Vector2Int(nextX, currentPos.y)))
+        if (direction.x != 0 && (nextX < 0 || nextX >= uiManager.GridWidth || IsTileSolid(new Vector2Int(nextX, currentPos.y))))
         {
             hitWallX = true;
             direction.x *= -1; 
         }
 
-        if (nextY < 0 || nextY >= uiManager.GridHeight || IsTileSolid(new Vector2Int(currentPos.x, nextY)))
+        if (direction.y != 0 && (nextY < 0 || nextY >= uiManager.GridHeight || IsTileSolid(new Vector2Int(currentPos.x, nextY))))
         {
             hitWallY = true;
             direction.y *= -1; 
         }
 
-        if (!hitWallX && !hitWallY && IsTileSolid(new Vector2Int(nextX, nextY)))
+        if (!hitWallX && !hitWallY && direction.x != 0 && direction.y != 0 && IsTileSolid(new Vector2Int(nextX, nextY)))
         {
             cornerHit = true;
             direction.x *= -1;
@@ -99,10 +99,19 @@ public class GridBouncingMovement : MonoBehaviour
     /// </summary>
     private bool IsTileSolid(Vector2Int pos)
     {
+        // First check if another card or piece is physically occupying this tile on the board
+        Tile tile = _entity.MyGridManager.GetTileAt(pos);
+        if (tile != null && tile.IsOccupied)
+        {
+            return true;
+        }
+
+        // Then check the underlying grid data state for permanent walls or holes
         if (_gridData.TileStates.TryGetValue(pos, out int stateValue))
         {
             return stateValue != 0; // Assuming 0 is empty space
         }
+        
         return false;
     }
 
