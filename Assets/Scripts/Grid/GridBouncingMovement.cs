@@ -24,7 +24,7 @@ public class GridBouncingMovement : MonoBehaviour
         _entity = GetComponent<GridEntity>();
         _linkedTurret = linkedTurret;
         _gridData = gridData;
-
+        
         _isBouncing = true;
         _timer = MoveInterval;
     }

@@ -90,10 +90,8 @@ public class GridPlacementManager : MonoBehaviour
     /// <summary>
     /// Specific method: Spawning a bouncing orb.
     /// </summary>
-    public GridEntity SpawnBouncingItem(GridData itemData, Vector2Int startPos, Vector2Int startDirection, TurretGridData currentGridData)
+    public void SpawnBouncingItem(GridData itemData, Vector2Int startPos, Vector2Int startDirection, TurretGridData currentGridData)
     {
-        if (BouncingPrefab == null) return null;
-
         GridEntity bouncer = SpawnEntityOnTile(BouncingPrefab, itemData, startPos, false); 
         
         if (bouncer != null)
@@ -107,7 +105,17 @@ public class GridPlacementManager : MonoBehaviour
                 _uiManager.TrackBouncer(bouncer); // Hand the bouncer over to the UI manager for destruction at round end
             }
         }
-
-        return bouncer;
+    }
+    
+    /// <summary>
+    /// Specific method: Clears the occupied status of a tile.
+    /// </summary>
+    public void ClearTileOccupation(Vector2Int gridPosition)
+    {
+        Tile targetTile = _uiManager.GetTileAt(gridPosition);
+        if (targetTile != null)
+        {
+            targetTile.SetOccupied(false);
+        }
     }
 }
