@@ -57,19 +57,27 @@ public class GridEntity : MonoBehaviour
     // Helper method for the movement script to handle the math rotation
     public void RotateDirectionClockwise()
     {
-        if (CurrentDirection == Vector2Int.up) CurrentDirection = Vector2Int.right;
-        else if (CurrentDirection == Vector2Int.right) CurrentDirection = Vector2Int.down;
-        else if (CurrentDirection == Vector2Int.down) CurrentDirection = Vector2Int.left;
-        else if (CurrentDirection == Vector2Int.left) CurrentDirection = Vector2Int.up;
+        if (CurrentDirection == Vector2Int.up) CurrentDirection = new Vector2Int(1, 1);
+        else if (CurrentDirection == new Vector2Int(1, 1)) CurrentDirection = Vector2Int.right;
+        else if (CurrentDirection == Vector2Int.right) CurrentDirection = new Vector2Int(1, -1);
+        else if (CurrentDirection == new Vector2Int(1, -1)) CurrentDirection = Vector2Int.down;
+        else if (CurrentDirection == Vector2Int.down) CurrentDirection = new Vector2Int(-1, -1);
+        else if (CurrentDirection == new Vector2Int(-1, -1)) CurrentDirection = Vector2Int.left;
+        else if (CurrentDirection == Vector2Int.left) CurrentDirection = new Vector2Int(-1, 1);
+        else if (CurrentDirection == new Vector2Int(-1, 1)) CurrentDirection = Vector2Int.up;
     }
 
     // Added counter-clockwise math for the scroll wheel up
     public void RotateDirectionCounterClockwise()
     {
-        if (CurrentDirection == Vector2Int.up) CurrentDirection = Vector2Int.left;
-        else if (CurrentDirection == Vector2Int.left) CurrentDirection = Vector2Int.down;
-        else if (CurrentDirection == Vector2Int.down) CurrentDirection = Vector2Int.right;
-        else if (CurrentDirection == Vector2Int.right) CurrentDirection = Vector2Int.up;
+        if (CurrentDirection == Vector2Int.up) CurrentDirection = new Vector2Int(-1, 1);
+        else if (CurrentDirection == new Vector2Int(-1, 1)) CurrentDirection = Vector2Int.left;
+        else if (CurrentDirection == Vector2Int.left) CurrentDirection = new Vector2Int(-1, -1);
+        else if (CurrentDirection == new Vector2Int(-1, -1)) CurrentDirection = Vector2Int.down;
+        else if (CurrentDirection == Vector2Int.down) CurrentDirection = new Vector2Int(1, -1);
+        else if (CurrentDirection == new Vector2Int(1, -1)) CurrentDirection = Vector2Int.right;
+        else if (CurrentDirection == Vector2Int.right) CurrentDirection = new Vector2Int(1, 1);
+        else if (CurrentDirection == new Vector2Int(1, 1)) CurrentDirection = Vector2Int.up;
     }
     
     public void SetDirection(Vector2Int savedDirection)
@@ -79,9 +87,13 @@ public class GridEntity : MonoBehaviour
         // Apply visual rotation based on the cardinal direction vector
         float angle = 0f;
         if (CurrentDirection == Vector2Int.up) angle = 0f;
+        else if (CurrentDirection == new Vector2Int(1, 1)) angle = -45f;
         else if (CurrentDirection == Vector2Int.right) angle = -90f;
+        else if (CurrentDirection == new Vector2Int(1, -1)) angle = -135f;
         else if (CurrentDirection == Vector2Int.down) angle = -180f;
+        else if (CurrentDirection == new Vector2Int(-1, -1)) angle = 135f; 
         else if (CurrentDirection == Vector2Int.left) angle = 90f;
+        else if (CurrentDirection == new Vector2Int(-1, 1)) angle = 45f;
 
         // Tell the movement script exactly what rotation it should hold
         if (TryGetComponent(out GridEntityMovement movementScript))

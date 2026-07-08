@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75a020642d07240c2be5a454a346aa04, type: 3}
   m_Name: Kinetic Bouncer
   m_EditorClassIdentifier: Assembly-CSharp::KineticBouncerData
-  gridName: 
-  girdArtwork: {fileID: 0}
+  gridName: Ball Bouncing
+  girdArtwork: {fileID: 21300000, guid: f55e5fd19f0ad4c43a4d4d713e877f80, type: 3}
   baseDamage: 10
   DamagePerBounce: 3

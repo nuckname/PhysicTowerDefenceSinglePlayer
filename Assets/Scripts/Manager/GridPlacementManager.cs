@@ -22,7 +22,7 @@ public class GridPlacementManager : MonoBehaviour
     /// <summary>
     /// Base method: Spawns ANY entity (Cards, Lasers, Bouncers) onto a tile.
     /// </summary>
-    public GridEntity SpawnEntityOnTile(GridEntity prefabToSpawn, GridData cardData, Vector2Int gridPosition, bool occupyTile = false)
+    public GridEntity SpawnEntityOnTile(GridEntity prefabToSpawn, GridData cardData, Vector2Int gridPosition, bool occupyTile)
     {
         Tile targetTile = _uiManager.GetTileAt(gridPosition);
         if (targetTile == null) return null;
@@ -75,6 +75,9 @@ public class GridPlacementManager : MonoBehaviour
 
         entityToMove.SetGridPosition(newPosition);
         entityToMove.transform.SetParent(targetTile.transform, false);
+        
+        // This ensures it snaps perfectly to the center of the new tile
+        entityToMove.transform.localPosition = Vector3.zero;
 
         _combatLogic.RecalculateBoard();
 
@@ -84,16 +87,25 @@ public class GridPlacementManager : MonoBehaviour
     /// <summary>
     /// Specific method: Spawning a bouncing orb.
     /// </summary>
-    public GridEntity SpawnBouncingItem(GridData itemData, Vector2Int startPos, TurretGridData currentGridData)
+    /// <summary>
+    /// Specific method: Spawning a bouncing orb.
+    /// </summary>
+    public GridEntity SpawnBouncingItem(GridData itemData, Vector2Int startPos, Vector2Int startDirection, TurretGridData currentGridData)
     {
         if (BouncingPrefab == null) return null;
 
         GridEntity bouncer = SpawnEntityOnTile(BouncingPrefab, itemData, startPos, false); 
         
-        if (bouncer != null && bouncer.TryGetComponent(out GridBouncingMovement bounceScript))
+        if (bouncer != null)
         {
-            bounceScript.Launch(_linkedTurret, currentGridData);
-            _uiManager.TrackBouncer(bouncer); // Hand the bouncer over to the UI manager for destruction at round end
+            // Apply the saved rotation direction from the source card to the new bouncer
+            bouncer.SetDirection(startDirection);
+
+            if (bouncer.TryGetComponent(out GridBouncingMovement bounceScript))
+            {
+                bounceScript.Launch(_linkedTurret, currentGridData);
+                _uiManager.TrackBouncer(bouncer); // Hand the bouncer over to the UI manager for destruction at round end
+            }
         }
 
         return bouncer;

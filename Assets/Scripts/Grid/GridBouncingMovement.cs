@@ -25,9 +25,6 @@ public class GridBouncingMovement : MonoBehaviour
         _linkedTurret = linkedTurret;
         _gridData = gridData;
 
-        // Give it an initial diagonal trajectory (e.g., Up-Right)
-        _entity.SetDirection(new Vector2Int(1, 1)); 
-
         _isBouncing = true;
         _timer = MoveInterval;
     }

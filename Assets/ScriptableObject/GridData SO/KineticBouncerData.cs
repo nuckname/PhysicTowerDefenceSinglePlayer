@@ -42,7 +42,8 @@ public class KineticBouncerData : GridData, IWallBouncer, IRoundListener
     
     public void OnRoundStart(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity)
     {
-        placementManager.SpawnBouncingItem(this, sourceEntity.CurrentGridPosition, gridData);
+        // Pass the CurrentDirection of the placed entity into the spawner
+        placementManager.SpawnBouncingItem(this, sourceEntity.CurrentGridPosition, sourceEntity.CurrentDirection, gridData);
         
         sourceEntity.gameObject.SetActive(false); 
     }

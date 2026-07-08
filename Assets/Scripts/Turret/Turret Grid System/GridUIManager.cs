@@ -30,7 +30,7 @@ public class GridUIManager : MonoBehaviour
     
     private GridPlacementManager _gridPlacementManager;
     private GridCombatLogic _gridCombatLogic;
-    private Turret _linkedTurret; 
+    private Turret _linkedTurret;
     
     private void Awake()
     {

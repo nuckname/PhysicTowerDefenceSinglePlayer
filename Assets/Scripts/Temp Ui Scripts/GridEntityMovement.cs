@@ -239,9 +239,6 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         _wasDragged = false;
     }
 
-    // ==========================================
-    // GRID LOGIC
-    // ==========================================
     private bool AttemptMoveToNewTile(PointerEventData eventData)
     {
         List<RaycastResult> results = new List<RaycastResult>();
@@ -276,12 +273,12 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
         if (clockwise)
         {
             _gridEntity.RotateDirectionClockwise();
-            _targetZRotation -= 90f;
+            _targetZRotation -= 45f;
         }
         else
         {
             _gridEntity.RotateDirectionCounterClockwise();
-            _targetZRotation += 90f;
+            _targetZRotation += 45f;
         }
 
         // Cancel any active hover pause so Update starts rotating this instantly
