@@ -77,6 +77,21 @@ public class HorizontalCardHolder : MonoBehaviour
             RebuildHandVisuals();
         }
     }
+    
+    public void ClearHand()
+    {
+        // Clear the internal list
+        if (cardsInHand != null)
+        {
+            cardsInHand.Clear();
+        }
+
+        // Destroy all the spawned card slots/visuals currently attached to this UI panel
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+    }
 
     /// <summary>
     /// Safely injects a new card back into the hand from the world 

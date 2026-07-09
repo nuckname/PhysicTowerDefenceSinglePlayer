@@ -85,10 +85,19 @@ public class GridUIManager : MonoBehaviour
         gridCanvas.enabled = isVisible; 
         graphicRaycaster.enabled = isVisible;
 
-        // If we are opening the UI, load the pending hand
-        if (isVisible && inventoryCardHolder != null && pendingCards != null)
+        // Handle the Hand Inventory
+        if (inventoryCardHolder != null)
         {
-            inventoryCardHolder.LoadHand(pendingCards);
+            if (isVisible && pendingCards != null)
+            {
+                // UI is opening: Load the cards
+                inventoryCardHolder.LoadHand(pendingCards);
+            }
+            else if (!isVisible)
+            {
+                // UI is closing: Unload the hand so it's fresh for next time
+                inventoryCardHolder.ClearHand();
+            }
         }
     }
     
