@@ -3,8 +3,10 @@ using UnityEngine;
 public class TurretScreen : MonoBehaviour
 {
     [Header("UI Spawning")]
-    [SerializeField] private GridUIManager _canvasPrefab; // Drag your new Canvas Prefab here
-    private GridUIManager _activeCanvasInstance; // Keeps track of the currently open grid
+    [SerializeField] private GridUIManager _canvasPrefab; 
+    
+    // We keep a permanent reference to this turret's specific grid
+    private GridUIManager _myGridInstance; 
 
     private TurretGridManager _myGridManager;
     private Turret _myTurret;
@@ -16,32 +18,40 @@ public class TurretScreen : MonoBehaviour
         _myTurret = GetComponent<Turret>();
     }
 
-    public void OpenScreen()
+    private void Start()
     {
-        // Prevent spawning multiple canvases if this turret is already open
-        if (_activeCanvasInstance != null) return;
-
-        // 2. Spawn the new Canvas
-        _activeCanvasInstance = Instantiate(_canvasPrefab);
-
-        // 3. Tell the spawned canvas to generate and load the specific turret's data
-        if (_myGridManager != null && _myTurret != null)
+        // 1. Spawn the UI as soon as the Turret is built
+        if (_canvasPrefab != null && _myGridManager != null && _myTurret != null)
         {
-            _activeCanvasInstance.InitializeAndLoadGrid(_myGridManager.MyGridData, _myTurret.PendingCards, _myTurret);
+            _myGridInstance = Instantiate(_canvasPrefab);
+            
+            // 2. Initialize the background logic
+            _myGridInstance.InitializeGrid(_myGridManager.MyGridData, _myTurret);
+            
+            // 3. Hide it immediately so it runs invisibly until the player clicks on it
+            _myGridInstance.SetVisualsActive(false); 
         }
         else
         {
-            Debug.LogError($"Required scripts missing on {gameObject.name}!");
+            Debug.LogError($"Required scripts or prefab missing on {gameObject.name}!");
+        }
+    }
+
+    public void OpenScreen()
+    {
+        if (_myGridInstance != null)
+        {
+            // Turn the Canvas ON and load any pending cards into the UI hand
+            _myGridInstance.SetVisualsActive(true, _myTurret.PendingCards);
         }
     }
 
     public void CloseScreen()
     {
-        // 1. If a grid is already open, destroy it so we don't overlap canvases
-        if (_activeCanvasInstance != null)
+        if (_myGridInstance != null)
         {
-            Destroy(_activeCanvasInstance.gameObject);
-            _activeCanvasInstance = null; // Clear the reference
+            // Turn the Canvas OFF (logic and bouncers keep running in the background!)
+            _myGridInstance.SetVisualsActive(false);
         }
     }
 }

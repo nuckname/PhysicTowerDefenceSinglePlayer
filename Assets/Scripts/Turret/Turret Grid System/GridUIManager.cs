@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-// NEW: This forces Unity to add these scripts automatically. No more missing component errors!
 [RequireComponent(typeof(GridPlacementManager))] 
 [RequireComponent(typeof(GridCombatLogic))]
 public class GridUIManager : MonoBehaviour 
@@ -10,6 +9,9 @@ public class GridUIManager : MonoBehaviour
     [SerializeField] private int _width, _height;
     [SerializeField] private Tile _tilePrefab;
     [SerializeField] private Transform _gridParent; 
+    
+    [SerializeField] private Canvas gridCanvas;
+    [SerializeField] private GraphicRaycaster graphicRaycaster;
 
     private Dictionary<Vector2Int, Tile> _uiTiles;
 
@@ -26,96 +28,80 @@ public class GridUIManager : MonoBehaviour
     
     public int GridWidth => _width;
     public int GridHeight => _height;
-    public TurretGridData CurrentGridData => _currentGridData; // Public getter for the cards!
+    public TurretGridData CurrentGridData => _currentGridData; 
     
     private GridPlacementManager _gridPlacementManager;
     private GridCombatLogic _gridCombatLogic;
     private Turret _linkedTurret;
     
+    private bool _isInitialized = false;
+
     private void Awake()
     {
-        // Grab sibling components automatically
         _gridPlacementManager = GetComponent<GridPlacementManager>();
         _gridCombatLogic = GetComponent<GridCombatLogic>();
+        
+        gridCanvas = GetComponent<Canvas>();
+        graphicRaycaster = GetComponent<GraphicRaycaster>();
     }
 
-    public void InitializeAndLoadGrid(TurretGridData MyGridData, List<GridData> pendingCards, Turret myTurret) 
+    // Call this ONCE when the Turret is built
+    public void InitializeGrid(TurretGridData MyGridData, Turret myTurret) 
     {
+        if (_isInitialized) return; // Prevent generating the grid twice!
+
         _linkedTurret = myTurret; 
-
-        // 1. INITIALIZE THE PLACEMENT MANAGER (This was missing and causing errors!)
-        _gridPlacementManager.Initialize(myTurret, this, _gridCombatLogic);
-
-        // 2. Initialize Combat Logic
-        _gridCombatLogic.InitializeGridLogic(MyGridData, this, myTurret);
-
         _currentGridData = MyGridData;
 
-        GenerateUIGrid();
+        _gridPlacementManager.Initialize(myTurret, this, _gridCombatLogic);
+        _gridCombatLogic.InitializeGridLogic(MyGridData, this, myTurret);
 
-        if (inventoryCardHolder != null)
+        GenerateUIGrid();
+        
+        if (MyGridData != null && MyGridData.TileStates != null)
+        {
+            foreach (var kvp in _uiTiles)
+            {
+                Vector2Int pos = kvp.Key;
+                Tile tileUI = kvp.Value;
+                
+                if (MyGridData.TileStates.TryGetValue(pos, out int stateValue))
+                {
+                    tileUI.SetState(stateValue);
+                }
+                else
+                {
+                    tileUI.ResetState();
+                }
+            }
+        }
+
+        _isInitialized = true;
+    }
+
+    // Call this when opening or closing the UI for this specific turret
+    public void SetVisualsActive(bool isVisible, List<GridData> pendingCards = null)
+    {
+        gridCanvas.enabled = isVisible; 
+        graphicRaycaster.enabled = isVisible;
+
+        // If we are opening the UI, load the pending hand
+        if (isVisible && inventoryCardHolder != null && pendingCards != null)
         {
             inventoryCardHolder.LoadHand(pendingCards);
         }
-        
-        if (MyGridData == null || MyGridData.TileStates == null) return;
-
-        foreach (var kvp in _uiTiles)
-        {
-            Vector2Int pos = kvp.Key;
-            Tile tileUI = kvp.Value;
-            
-            if (MyGridData.TileStates.TryGetValue(pos, out int stateValue))
-            {
-                tileUI.SetState(stateValue);
-            }
-            else
-            {
-                tileUI.ResetState();
-            }
-        }
-
-        LoadSavedBoardState();
     }
     
     public Transform GetTileTransform(Vector2Int gridPosition)
     {
-        if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition))
-        {
-            return _uiTiles[gridPosition].transform;
-        }
+        if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition)) return _uiTiles[gridPosition].transform;
         return null;
     }
     
     public Tile GetTileAt(Vector2Int gridPosition)
     {
-        if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition))
-        {
-            return _uiTiles[gridPosition];
-        }
+        if (_uiTiles != null && _uiTiles.ContainsKey(gridPosition)) return _uiTiles[gridPosition];
         return null;
-    }
-
-    private void LoadSavedBoardState()
-    {
-        if (_currentGridData == null || _currentGridData.SavedCards == null) return;
-
-        foreach (PlacedCardSaveState savedCard in _currentGridData.SavedCards)
-        {
-            // NEW: Pull the default prefab directly from the placement manager
-            GridEntity loadedEntity = _gridPlacementManager.SpawnEntityOnTile(
-                _gridPlacementManager.DefaultEntityPrefab, 
-                savedCard.CardData, 
-                savedCard.GridPosition, 
-                true
-            );
-            
-            if (loadedEntity != null)
-            {
-                loadedEntity.SetDirection(savedCard.Direction); 
-                _gridCombatLogic.RegisterEntity(loadedEntity);
-            }
-        }
     }
 
     private void GenerateUIGrid() 
@@ -133,10 +119,7 @@ public class GridUIManager : MonoBehaviour
                 spawnedTile.name = $"UI Tile {x} {y}";
 
                 RectTransform rect = spawnedTile.GetComponent<RectTransform>();
-                rect.anchoredPosition = new Vector2(
-                    startX + (x * _tileSize), 
-                    startY + (y * _tileSize)
-                );
+                rect.anchoredPosition = new Vector2(startX + (x * _tileSize), startY + (y * _tileSize));
 
                 var isOffset = (x % 2 == 0 && y % 2 != 0) || (x % 2 != 0 && y % 2 == 0);
                 Vector2Int pos = new Vector2Int(x, y);
@@ -186,6 +169,7 @@ public class GridUIManager : MonoBehaviour
             {
                 if(entity.MyCardData is IRoundListener iRoundListener)
                 {
+                    // Re-enable the card visually (it will be hidden if the Canvas is disabled anyway)
                     entity.gameObject.SetActive(true);
                     iRoundListener.OnRoundEnd(_gridPlacementManager, _currentGridData, entity); 
                 }
@@ -193,14 +177,7 @@ public class GridUIManager : MonoBehaviour
         }
     }
 
-    public void RecalculateBoard()
-    {
-        _gridCombatLogic.RecalculateBoard();
-    }
+    public void RecalculateBoard() => _gridCombatLogic.RecalculateBoard();
     
-    // NEW: Allow the Placement Manager to track active bouncers securely
-    public void TrackBouncer(GridEntity bouncer)
-    {
-        _activeBouncers.Add(bouncer);
-    }
+    public void TrackBouncer(GridEntity bouncer) => _activeBouncers.Add(bouncer);
 }
