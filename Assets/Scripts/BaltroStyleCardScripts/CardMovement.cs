@@ -129,12 +129,20 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     private void HandlePlayAreaTransition()
     {
-        // NEW: If a Turret Grid is currently open, we don't want the card turning invisible 
-        // while we are dragging it up to place it on the UI grid!
-        if (FindAnyObjectByType<GridUIManager>() != null)
+        // FIX: Check if there is an ACTIVELY VISIBLE Grid UI open
+        bool isAnyGridOpen = false;
+        GridUIManager[] allManagers = FindObjectsByType<GridUIManager>(FindObjectsSortMode.None);
+        foreach (var manager in allManagers)
         {
-            return; 
+            if (manager.TryGetComponent(out Canvas canvas) && canvas.enabled)
+            {
+                isAnyGridOpen = true;
+                break; // Found an open one!
+            }
         }
+
+        // If a canvas is visibly open, don't turn invisible.
+        if (isAnyGridOpen) return; 
 
         Vector3 pointerPosition = Pointer.current != null ? (Vector3)Pointer.current.position.ReadValue() : Vector3.zero;
         bool isMouseInPlayArea = pointerPosition.y > playAreaThresholdY;
@@ -197,6 +205,7 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         else
         {
             // 3. Missed everything, return to hand
+            HorizontalCardHolder activeHolder = GetActiveCardHolder();
             if (transform.parent != null && !transform.parent.CompareTag("Slot") && HorizontalCardHolder.Instance != null)
             {
                 HorizontalCardHolder.Instance.AssignSlotToCard(this);
@@ -207,6 +216,21 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
     }
 
+    // Helper method to find the hand that is currently visible on the screen
+    private HorizontalCardHolder GetActiveCardHolder()
+    {
+        HorizontalCardHolder[] allHolders = FindObjectsByType<HorizontalCardHolder>(FindObjectsSortMode.None);
+        foreach (var holder in allHolders)
+        {
+            // Maybe use a variable?
+            if (holder.GetComponentInParent<Canvas>().enabled)
+            {
+                return holder; // Return the visible one!
+            }
+        }
+        return null;
+    }
+    
     private bool AttemptPlayOnGrid(PointerEventData eventData)
     {
         if (eventData == null || CardData == null) return false;
@@ -219,7 +243,7 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             Tile hitTile = result.gameObject.GetComponent<Tile>();
             if (hitTile != null)
             {
-                GridPlacementManager placementManager = FindAnyObjectByType<GridPlacementManager>();
+                GridPlacementManager placementManager = hitTile.GetComponentInParent<GridPlacementManager>();
                 
                 if (placementManager != null)
                 {
@@ -303,10 +327,9 @@ public class CardMovement : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     public void SuccessfulPlay()
     {
-        if (HorizontalCardHolder.Instance != null)
-        {
-            HorizontalCardHolder.Instance.cardsInHand.Remove(this);
-        }
+        HorizontalCardHolder activeHolder = GetActiveCardHolder();
+        
+        activeHolder.cardsInHand.Remove(this);
 
         if (transform.parent != null && transform.parent.CompareTag("Slot"))
         {
