@@ -91,9 +91,32 @@ public class GridBouncingMovement : MonoBehaviour
         Transform targetTile = uiManager.GetTileTransform(newPos);
         if (targetTile != null) transform.SetParent(targetTile, false);
 
+        if (CheckCollision(uiManager, newPos)) return;
+
         TriggerTileEffect();
     }
 
+    private bool CheckCollision(GridUIManager uiManager, Vector2Int newPos)
+    {
+        Tile landedTile = uiManager.GetTileAt(newPos);
+        if (landedTile != null && landedTile.IsOccupied && landedTile.OccupyingEntity != null)
+        {
+            if (landedTile.OccupyingEntity.MyCardData is IEntityCollision collidable)
+            {
+                collidable.OnHitByEntity(_entity, landedTile.OccupyingEntity, _linkedTurret);
+
+                // Check if the ball was destroyed by the collision!
+                if (this == null || gameObject == null) return true;
+            }
+        }
+
+        // No Collision
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a grid coordinate has an object on it, treating it as a wall to bounce off of.
+    /// </summary>
     /// <summary>
     /// Checks if a grid coordinate has an object on it, treating it as a wall to bounce off of.
     /// </summary>
@@ -103,6 +126,14 @@ public class GridBouncingMovement : MonoBehaviour
         Tile tile = _entity.MyGridManager.GetTileAt(pos);
         if (tile != null && tile.IsOccupied)
         {
+            // Ask the occupying entity if it allows pass-through (like a laser)
+            if (tile.OccupyingEntity != null && tile.OccupyingEntity.MyCardData is IEntityCollision collidable)
+            {
+                // If it's a laser, IsSolidWall() returns false, meaning the tile is NOT solid to the bouncer!
+                return collidable.IsSolidWall(); 
+            }
+            
+            // If it doesn't implement our collision interface, treat it as a solid wall by default
             return true;
         }
 

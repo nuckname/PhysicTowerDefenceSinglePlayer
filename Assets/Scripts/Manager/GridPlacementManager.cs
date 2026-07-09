@@ -32,7 +32,7 @@ public class GridPlacementManager : MonoBehaviour
 
         if (occupyTile)
         {
-            targetTile.SetOccupied(true);
+            targetTile.SetOccupied(true, newEntity);
         }
 
         return newEntity;
@@ -69,9 +69,9 @@ public class GridPlacementManager : MonoBehaviour
         if (targetTile == null || targetTile.IsOccupied) return false;
 
         Tile oldTile = _uiManager.GetTileAt(entityToMove.CurrentGridPosition);
-        if (oldTile != null) oldTile.SetOccupied(false);
+        if (oldTile != null) oldTile.SetOccupied(false, null);
 
-        targetTile.SetOccupied(true);
+        targetTile.SetOccupied(true, entityToMove);
 
         entityToMove.SetGridPosition(newPosition);
         entityToMove.transform.SetParent(targetTile.transform, false);
@@ -84,9 +84,6 @@ public class GridPlacementManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Specific method: Spawning a bouncing orb.
-    /// </summary>
     /// <summary>
     /// Specific method: Spawning a bouncing orb.
     /// </summary>
@@ -115,7 +112,7 @@ public class GridPlacementManager : MonoBehaviour
         Tile targetTile = _uiManager.GetTileAt(gridPosition);
         if (targetTile != null)
         {
-            targetTile.SetOccupied(false);
+            targetTile.SetOccupied(false, null);
         }
     }
 }

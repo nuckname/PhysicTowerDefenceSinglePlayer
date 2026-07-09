@@ -30,7 +30,7 @@ public class Tile : MonoBehaviour
         ResetState();
     }
     
-    public void SetOccupied(bool isOccupied, GridEntity entity = null)
+    public void SetOccupied(bool isOccupied, GridEntity entity)
     {
         IsOccupied = isOccupied;
         OccupyingEntity = entity;

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Laser Card", menuName = "Grid System/Cards/Laser Upgrade")]
-public class LaserGridTile : GridData
+public class LaserGridTile : GridData, IEntityCollision
 {
     [Header("Laser Specifics")]
     public int DamagePerSquare = 5;
@@ -20,6 +20,18 @@ public class LaserGridTile : GridData
         modifiers.Add(new StatModifier { Type = StatType.Damage, Value = calculatedDamageBonus });
         return modifiers;
     }
+    
+    public bool IsSolidWall() => false;
+
+    public void OnHitByEntity(GridEntity activeEntity, GridEntity stationaryEntity, Turret linkedTurret)
+    {
+        // The active entity (Bouncer) entered the laser beam
+        if (activeEntity != null)
+        {
+            Debug.Log($"*BZZT!* {activeEntity.gameObject.name} entered a laser and was destroyed!");
+            Destroy(activeEntity.gameObject);
+        }
+    }
 
     public override void SpawnVisuals(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, GridUIManager uiManager, List<GameObject> spawnedVisualsTracker)
     {
@@ -27,37 +39,31 @@ public class LaserGridTile : GridData
 
         Vector2Int currentPos = startPos + direction;
 
-        // Loop through the grid step-by-step
         while (currentPos.x >= 0 && currentPos.x < uiManager.GridWidth && currentPos.y >= 0 && currentPos.y < uiManager.GridHeight)
         {
-            if (gridData.TileStates.TryGetValue(currentPos, out int stateValue) && stateValue != 0) 
-            {
-                break; // Hit something
-            }
+            if (gridData.TileStates.TryGetValue(currentPos, out int stateValue) && stateValue != 0) break; 
 
-            // 1. Get the actual UI Tile from the manager
-            Transform tileTransform = uiManager.GetTileTransform(currentPos);
+            // Grab the actual Tile object so we can interact with its state
+            Tile actualTile = uiManager.GetTileAt(currentPos);
             
-            if (tileTransform != null)
+            if (actualTile != null)
             {
-                // 2. Spawn a laser segment directly ON this specific tile
-                GridEntity laserSegment = Instantiate(LaserBeamPrefab, tileTransform);
+                GridEntity laserSegment = Instantiate(LaserBeamPrefab, actualTile.transform);
                 laserSegment.gameObject.name = $"Laser Segment {currentPos}";
 
-                // 3. Initialize it so it acts like a real entity on this cell
                 laserSegment.Initialize(this, currentPos, uiManager);
 
-                // 4. Update the visual sprite
+                // MARK THE TILE AS OCCUPIED BY THE LASER
+                actualTile.SetOccupied(true, laserSegment);
+
                 if (LaserBeamSprite != null && laserSegment.Artwork != null)
                 {
                     laserSegment.Artwork.sprite = LaserBeamSprite;
                 }
 
-                // 5. Rotate it to match the beam's direction
                 float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                 laserSegment.transform.rotation = Quaternion.Euler(0, 0, angle);
 
-                // 6. Track it so the CombatLogic clears it next recalculation
                 spawnedVisualsTracker.Add(laserSegment.gameObject);
             }
 
