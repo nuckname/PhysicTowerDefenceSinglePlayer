@@ -250,22 +250,22 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
             Tile hitTile = result.gameObject.GetComponent<Tile>();
             if (hitTile != null)
             {
-                GridPlacementManager placementManager = FindAnyObjectByType<GridPlacementManager>();
+                GridPlacementManager placementManager = _gridEntity.MyGridManager.GetComponent<GridPlacementManager>();
+                
                 if (placementManager != null)
                 {
-                    // NEW: Ask the manager to handle the move
                     bool moveSuccessful = placementManager.TryMoveExistingEntity(_gridEntity, hitTile.Position);
                     
                     if (moveSuccessful)
                     {
-                        // The manager handled the data and hierarchy, just play the juice!
+                        // The item was assigned to the new parent; seamlessly glide it to the center!
                         transform.DOLocalMove(Vector3.zero, 0.2f).SetEase(Ease.OutBack);
                         return true;
                     }
                 }
             }
         }
-        return false; // Bounce back to original spot
+        return false; 
     }
     
     private void RotateVisualsAndData(bool clockwise)
