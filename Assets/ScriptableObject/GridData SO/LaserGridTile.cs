@@ -51,7 +51,7 @@ public class LaserGridTile : GridData, IEntityCollision
                 GridEntity laserSegment = Instantiate(LaserBeamPrefab, actualTile.transform);
                 laserSegment.gameObject.name = $"Laser Segment {currentPos}";
 
-                laserSegment.Initialize(this, currentPos, uiManager);
+                laserSegment.Initialize(this, currentPos, uiManager, true);
 
                 // MARK THE TILE AS OCCUPIED BY THE LASER
                 actualTile.SetOccupied(true, laserSegment);

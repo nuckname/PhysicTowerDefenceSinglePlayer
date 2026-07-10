@@ -34,7 +34,7 @@ public class GridEntity : MonoBehaviour
     }
 
     // Called by the GridUIManager the moment this is dropped onto a tile
-    public void Initialize(GridData cardData, Vector2Int startPos, GridUIManager manager)
+    public void Initialize(GridData cardData, Vector2Int startPos, GridUIManager manager, bool isVisualOnly = false)
     {
         MyCardData = cardData;
         CurrentGridPosition = startPos;
@@ -71,12 +71,12 @@ public class GridEntity : MonoBehaviour
             movementScript.ResetMovementState();
         }
         
-        if (MyGridManager != null)
+        if (!isVisualOnly && MyGridManager != null)
         {
-            MyGridCombatLogic = MyGridManager.GetComponent<GridCombatLogic>();
-            if (MyGridCombatLogic != null)
+            GridCombatLogic logic = MyGridManager.GetComponent<GridCombatLogic>();
+            if (logic != null)
             {
-                MyGridCombatLogic.RegisterEntity(this);
+                logic.RegisterEntity(this);
             }
         }
     }
