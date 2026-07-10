@@ -54,7 +54,7 @@ public class GridUIManager : MonoBehaviour
         _currentGridData = MyGridData;
 
         _gridPlacementManager.Initialize(myTurret, this, _gridCombatLogic);
-        _gridCombatLogic.InitializeGridLogic(MyGridData, this, myTurret);
+        _gridCombatLogic.InitializeGridLogic(MyGridData, this, myTurret, _gridPlacementManager);
 
         GenerateUIGrid();
         
@@ -162,6 +162,8 @@ public class GridUIManager : MonoBehaviour
                 iRoundListener.OnRoundStart(_gridPlacementManager, _currentGridData, entity);
             }
         }
+        
+        _gridCombatLogic.NotifyRoundStart();
     }
 
     private void HandleRoundEnded()
@@ -184,6 +186,8 @@ public class GridUIManager : MonoBehaviour
                 }
             }
         }
+        
+        _gridCombatLogic.NotifyRoundEnd();
     }
 
     public void RecalculateBoard() => _gridCombatLogic.RecalculateBoard();

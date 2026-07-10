@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b923139a36d0fe4ba1039a0e46e517f, type: 3}
   m_Name: Steam Generator
   m_EditorClassIdentifier: Assembly-CSharp::SteamGeneratorData
-  gridName: 
+  gridName: Steam Generator
   girdArtwork: {fileID: 21300000, guid: fa122cde712f3f14984c0f6ea526dbe3, type: 3}
   baseDamage: 10
   cooldownTurns: 3

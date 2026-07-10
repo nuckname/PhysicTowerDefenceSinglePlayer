@@ -3,39 +3,55 @@ using UnityEngine;
 
 public class GridCombatLogic : MonoBehaviour
 {
+    [Header("Cooldown Settings")]
+    public float timePerTick = 1.0f;
+    private float _tickTimer = 0f;
+    private bool _isRoundActive = false; // Tracks if we should be ticking down
+
+    // --- VARIABLES (This fixes your _placementManager error) ---
     private GridUIManager _uiManager;
-    
-    // Assigned via initialization, NOT GetComponent
+    private GridPlacementManager _placementManager; 
     private Turret _activeTurret;
     
     public List<GridEntity> ActiveEntities => _activeEntities;
     
-    // Entity tracking
     private List<GridEntity> _activeEntities = new List<GridEntity>(); 
     private TurretGridData _currentGridData;
     
     private List<GameObject> _spawnedVisuals = new List<GameObject>();
 
-    private bool _isInitialized = false;
-    
-    // We completely remove Awake() since we don't want GetComponent here anymore.
-
     /// <summary>
     /// Call this from GridUIManager when opening the grid UI.
     /// Passes the active turret from the game world into the UI logic.
     /// </summary>
-    public void InitializeGridLogic(TurretGridData gridData, GridUIManager manager, Turret linkedTurret) // UPDATED PARAMETERS
+    public void InitializeGridLogic(TurretGridData gridData, GridUIManager manager, Turret linkedTurret, GridPlacementManager placementManager) 
     {
-        if (_isInitialized) return;
-        
-        _isInitialized = true;
-        
         _currentGridData = gridData;
-        _uiManager = manager; // Now we save the manager reference directly
-        _activeTurret = linkedTurret; // Inject the reference
+        _uiManager = manager; 
+        _activeTurret = linkedTurret; 
+        
+        // Save the reference so the interface hooks can use it!
+        _placementManager = placementManager; 
     }
 
-    // Called by the UI or Player Controller when a card is successfully dropped
+    private void Update()
+    {
+        // Because this is INSIDE GridCombatLogic, we just check our own bool
+        if (_isRoundActive)
+        {
+            _tickTimer += Time.deltaTime;
+
+            if (_tickTimer >= timePerTick)
+            {
+                // 1 Second has passed! Tick everything down.
+                TickGridCooldowns();
+                
+                // Reset the timer
+                _tickTimer -= timePerTick; 
+            }
+        }
+    }
+
     public void RegisterEntity(GridEntity newEntity)
     {
         if (!_activeEntities.Contains(newEntity))
@@ -53,7 +69,6 @@ public class GridCombatLogic : MonoBehaviour
         }
     }
 
-    // This is the master function: Clears the board -> Does the Math -> Draws the Visuals
     public void RecalculateBoard()
     {
         ClearOldVisuals();
@@ -70,7 +85,6 @@ public class GridCombatLogic : MonoBehaviour
                 ));
             }
             
-            // 2. MATH: Ask the UIManager for the grid dimensions
             List<StatModifier> pieceModifiers = entity.MyCardData.CalculateEffect(
                 entity.CurrentGridPosition, 
                 entity.CurrentDirection, 
@@ -81,29 +95,94 @@ public class GridCombatLogic : MonoBehaviour
 
             if (pieceModifiers != null) allCalculatedModifiers.AddRange(pieceModifiers);
 
-            // 3. VISUALS: Pass the UIManager and our Tracking List
             entity.MyCardData.SpawnVisuals(
                 entity.CurrentGridPosition, 
                 entity.CurrentDirection, 
                 _currentGridData, 
-                _uiManager,         // Pass the manager so the card can request tile transforms
-                _spawnedVisuals     // Pass the list so the card can log what it spawned
+                _uiManager,         
+                _spawnedVisuals     
             );
         }
 
         if (_activeTurret != null) _activeTurret.UpdateModifiers(allCalculatedModifiers);
     }
 
-    /// <summary>
-    /// Destroys all currently spawned visual child objects.
-    /// </summary>
     private void ClearOldVisuals()
     {
-        // Destroy all tracked visual segments
         foreach (GameObject visualSegment in _spawnedVisuals)
         {
             if (visualSegment != null) Destroy(visualSegment);
         }
         _spawnedVisuals.Clear();
+    }
+
+    // ==========================================
+    // --- ROUND EVENTS & INTERFACE DIRECTORS ---
+    // ==========================================
+
+    public void NotifyRoundStart()
+    {
+        // Turn on the Update() timer!
+        _isRoundActive = true;
+        _tickTimer = 0f; 
+
+        List<GridEntity> currentEntities = new List<GridEntity>(_activeEntities);
+        foreach (var entity in currentEntities)
+        {
+            if (entity != null && entity.MyCardData is IRoundListener roundListener)
+            {
+                roundListener.OnRoundStart(_placementManager, _currentGridData, entity);
+            }
+        }
+    }
+
+    public void NotifyRoundEnd()
+    {
+        // Pause the Update() timer!
+        _isRoundActive = false;
+
+        List<GridEntity> currentEntities = new List<GridEntity>(_activeEntities);
+        foreach (var entity in currentEntities)
+        {
+            if (entity != null && entity.MyCardData is IRoundListener roundListener)
+            {
+                roundListener.OnRoundEnd(_placementManager, _currentGridData, entity);
+            }
+        }
+    }
+
+    public void TickGridCooldowns()
+    {
+        for (int i = _activeEntities.Count - 1; i >= 0; i--)
+        {
+            var entity = _activeEntities[i];
+            if (entity != null)
+            {
+                entity.TickCooldown(_currentGridData, _placementManager);
+            }
+        }
+    }
+
+    public void NotifyEnemyKilled()
+    {
+        foreach (var entity in _activeEntities)
+        {
+            if (entity != null && entity.MyCardData is IEnemyDeathListener deathListener)
+            {
+                deathListener.OnEnemyKilled(_activeTurret);
+            }
+        }
+    }
+
+    public GridEntity GetSolidEntityAt(Vector2Int gridPosition)
+    {
+        foreach (var entity in _activeEntities)
+        {
+            if (entity.CurrentGridPosition == gridPosition && entity.MyCardData is IEntityCollision collisionData)
+            {
+                if (collisionData.IsSolidWall()) return entity;
+            }
+        }
+        return null;
     }
 }

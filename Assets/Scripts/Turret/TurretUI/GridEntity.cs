@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening; // Required for the smooth fill animation
 
 // Requires a UI Image component to show the artwork
 [RequireComponent(typeof(Image))]
@@ -11,6 +12,9 @@ public class GridEntity : MonoBehaviour
     public Vector2Int CurrentGridPosition { get; private set; }
     public Vector2Int CurrentDirection { get; private set; } = Vector2Int.up; // Defaults to facing North (0, 1)
     
+    [Header("UI Elements")]
+    public Image CooldownOverlay;
+
     // Instance State Variables
     public int CurrentCooldown { get; set; }
 
@@ -44,10 +48,21 @@ public class GridEntity : MonoBehaviour
 
         CurrentDirection = Vector2Int.up;
 
-        // --- NEW: Initialize Cooldown State if applicable ---
+        // --- COOLDOWN INITIALIZATION ---
         if (MyCardData is ICooldownHandler cooldownHandler)
         {
             CurrentCooldown = cooldownHandler.MaxCooldown;
+            if (CooldownOverlay != null)
+            {
+                CooldownOverlay.gameObject.SetActive(true);
+                CooldownOverlay.fillAmount = 1f; // Start completely full
+                CooldownOverlay.DOKill(); // Clear out any old tweens just in case
+            }
+        }
+        else
+        {
+            // If this item doesn't have a cooldown (like a basic laser), hide the overlay entirely
+            if (CooldownOverlay != null) CooldownOverlay.gameObject.SetActive(false);
         }
 
         // Tell the movement script to reset its rotation and scale state
@@ -63,19 +78,44 @@ public class GridEntity : MonoBehaviour
         if (MyCardData is ICooldownHandler cooldownHandler)
         {
             CurrentCooldown--;
+
+            if (CooldownOverlay != null)
+            {
+                // Calculate the new percentage (e.g. 2 / 5 = 0.4f)
+                float targetFillAmount = (float)CurrentCooldown / cooldownHandler.MaxCooldown;
+                
+                // Smoothly animate the fill going down over 0.5 seconds
+                CooldownOverlay.DOFillAmount(targetFillAmount, 0.5f).SetEase(Ease.InOutSine);
+            }
+
             if (CurrentCooldown <= 0)
             {
                 // Trigger the effect and pass THIS entity as the source
                 cooldownHandler.OnCooldownZero(gridData, this, MyGridManager, placementManager);
                 
-                // Reset cooldown
+                // Reset cooldown math
                 CurrentCooldown = cooldownHandler.MaxCooldown;
+
+                if (CooldownOverlay != null)
+                {
+                    // Delay snapping the visual back to full by 0.5s so the DOTween animation above has time to hit 0 first
+                    DOVirtual.DelayedCall(0.5f, () => 
+                    {
+                        if (this != null && CooldownOverlay != null) 
+                        {
+                            CooldownOverlay.fillAmount = 1f;
+                        }
+                    });
+                }
             }
         }
     }
 
     private void OnDestroy()
     {
+        // Stop any active tweens on the overlay so they don't error out when the object dies
+        if (CooldownOverlay != null) CooldownOverlay.DOKill();
+
         // Auto-free the tile if this entity is destroyed 
         if (MyGridManager != null)
         {

@@ -2464,6 +2464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514cf029b20bc394490b443754b2c398, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridCombatLogic
+  timePerTick: 1
 --- !u!114 &939732416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2526,6 +2527,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 514cf029b20bc394490b443754b2c398, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridCombatLogic
+  timePerTick: 1
 --- !u!114 &960133484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2571,10 +2573,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 7977111001322976423, guid: 239e5765edc76a74985b9ea19e45c6ef, type: 3}
   firePoint: {fileID: 1080881585}
   PendingCards:
-  - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
-  - {fileID: 11400000, guid: fc92276a3ef504771b38dbc7fe2a8afe, type: 2}
   - {fileID: 11400000, guid: 87051b4615286b041a905402cb010d29, type: 2}
-  - {fileID: 11400000, guid: fc92b44fc18df9d47838e901fbd209bc, type: 2}
   - {fileID: 11400000, guid: fe39e05200c94964788a4c01699dec33, type: 2}
 --- !u!65 &960133487
 BoxCollider:
