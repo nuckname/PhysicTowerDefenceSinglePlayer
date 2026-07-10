@@ -2331,6 +2331,7 @@ MonoBehaviour:
   PendingCards:
   - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
   - {fileID: 11400000, guid: fc92276a3ef504771b38dbc7fe2a8afe, type: 2}
+  - {fileID: 11400000, guid: fe39e05200c94964788a4c01699dec33, type: 2}
 --- !u!65 &939732409
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2465,6 +2466,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridCombatLogic
   timePerTick: 1
+  _activeEntities: []
 --- !u!114 &939732416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2528,6 +2530,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridCombatLogic
   timePerTick: 1
+  _activeEntities: []
 --- !u!114 &960133484
 MonoBehaviour:
   m_ObjectHideFlags: 0

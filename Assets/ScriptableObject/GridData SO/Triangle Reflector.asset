@@ -15,3 +15,4 @@ MonoBehaviour:
   gridName: 
   girdArtwork: {fileID: 21300000, guid: a477b4fdd3469eb4d9f1111e62a94e48, type: 3}
   baseDamage: 10
+  allowedRotation: 1

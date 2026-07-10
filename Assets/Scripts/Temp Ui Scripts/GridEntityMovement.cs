@@ -270,22 +270,19 @@ public class GridEntityMovement : MonoBehaviour, IPointerClickHandler, IBeginDra
     
     private void RotateVisualsAndData(bool clockwise)
     {
-        // 1. Math & Visual Rotation
         if (clockwise)
         {
-            _gridEntity.RotateDirectionClockwise();
-            _targetZRotation -= 45f;
+            float step = _gridEntity.RotateDirectionClockwise();
+            _targetZRotation -= step;
         }
         else
         {
-            _gridEntity.RotateDirectionCounterClockwise();
-            _targetZRotation += 45f;
+            float step = _gridEntity.RotateDirectionCounterClockwise();
+            _targetZRotation += step;
         }
 
-        // Cancel any active hover pause so Update starts rotating this instantly
         _isHoverPunching = false;
 
-        // Juice it!
         transform.DOPunchScale(new Vector3(0.1f, 0.1f, 0f), 0.2f, 10, 1);
 
         // 3. Tell the Grid Manager that the board state has changed
