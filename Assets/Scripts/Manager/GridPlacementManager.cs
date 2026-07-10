@@ -84,6 +84,30 @@ public class GridPlacementManager : MonoBehaviour
         return true;
     }
 
+    // Spawning mid-round sub-entities (like Steam or Growth items).
+    public GridEntity SpawnSubEntity(GridEntity prefabToSpawn, GridData entityData, Vector2Int gridPosition, Vector2Int direction)
+    {
+        Tile targetTile = _uiManager.GetTileAt(gridPosition);
+        
+        if (targetTile == null || targetTile.IsOccupied) return null;
+
+        GridEntity newSubEntity = SpawnEntityOnTile(prefabToSpawn, entityData, gridPosition, true);
+        
+        if (newSubEntity != null)
+        {
+            newSubEntity.SetDirection(direction);
+
+            if (_combatLogic != null)
+            {
+                // Register it so its effects (like +2 damage) apply to the turret!
+                _combatLogic.RegisterEntity(newSubEntity);
+                _combatLogic.RecalculateBoard();
+            }
+        }
+
+        return newSubEntity;
+    }
+
     /// <summary>
     /// Specific method: Spawning a bouncing orb.
     /// </summary>

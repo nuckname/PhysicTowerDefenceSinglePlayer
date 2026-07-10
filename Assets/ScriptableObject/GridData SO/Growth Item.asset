@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74e4950f49172ed439bb1b3a4fc6e970, type: 3}
+  m_Name: Growth Item
+  m_EditorClassIdentifier: Assembly-CSharp::GrowthEntityData
+  gridName: 
+  girdArtwork: {fileID: 21300000, guid: f6898fab6b8144f4494d3484a04e6e10, type: 3}
+  baseDamage: 10
+  cooldownTurns: 5
+  damagePerGrowthSpace: 2
+  growthPrefab: {fileID: 5236309299279783787, guid: 39ad6971e48b31748bca2800d50f574e, type: 3}

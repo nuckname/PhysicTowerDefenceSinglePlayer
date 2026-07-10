@@ -25,3 +25,23 @@ public interface IEntityCollision
     /// </summary>
     void OnHitByEntity(GridEntity activeEntity, GridEntity stationaryEntity, Turret linkedTurret);
 }
+
+public interface ICooldownHandler
+{
+    int MaxCooldown { get; }
+    int CurrentCooldown { get; set; }
+    
+    void OnCooldownZero(TurretGridData gridData, GridEntity sourceEntity, GridUIManager uiManager, GridPlacementManager placementManager);
+}
+
+public interface ITrajectoryModifier
+{
+    // Allows an item to change a projectile's direction based on its own rotation
+    Vector2Int GetRedirectedDirection(Vector2Int incomingDirection, Vector2Int itemFacingDirection);
+}
+
+public interface IEnemyDeathListener
+{
+    // Triggered by the Turret when it kills an enemy on the main map
+    void OnEnemyKilled(Turret linkedTurret);
+}

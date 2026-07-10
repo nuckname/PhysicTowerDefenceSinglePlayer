@@ -2572,6 +2572,10 @@ MonoBehaviour:
   firePoint: {fileID: 1080881585}
   PendingCards:
   - {fileID: 11400000, guid: 260a6097c4f035f40ac2490cb97c4b95, type: 2}
+  - {fileID: 11400000, guid: fc92276a3ef504771b38dbc7fe2a8afe, type: 2}
+  - {fileID: 11400000, guid: 87051b4615286b041a905402cb010d29, type: 2}
+  - {fileID: 11400000, guid: fc92b44fc18df9d47838e901fbd209bc, type: 2}
+  - {fileID: 11400000, guid: fe39e05200c94964788a4c01699dec33, type: 2}
 --- !u!65 &960133487
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -10,6 +10,9 @@ public class GridEntity : MonoBehaviour
     public GridData MyCardData { get; private set; }
     public Vector2Int CurrentGridPosition { get; private set; }
     public Vector2Int CurrentDirection { get; private set; } = Vector2Int.up; // Defaults to facing North (0, 1)
+    
+    // Instance State Variables
+    public int CurrentCooldown { get; set; }
 
     // Public getters so our movement script can access them
     public GridUIManager MyGridManager { get; private set; }
@@ -41,6 +44,12 @@ public class GridEntity : MonoBehaviour
 
         CurrentDirection = Vector2Int.up;
 
+        // --- NEW: Initialize Cooldown State if applicable ---
+        if (MyCardData is ICooldownHandler cooldownHandler)
+        {
+            CurrentCooldown = cooldownHandler.MaxCooldown;
+        }
+
         // Tell the movement script to reset its rotation and scale state
         if (TryGetComponent(out GridEntityMovement movementScript))
         {
@@ -48,7 +57,23 @@ public class GridEntity : MonoBehaviour
         }
     }
     
-    // Maybe we turn this off instead or something??
+    // Helper to tick down cooldowns cleanly on this specific instance
+    public void TickCooldown(TurretGridData gridData, GridPlacementManager placementManager)
+    {
+        if (MyCardData is ICooldownHandler cooldownHandler)
+        {
+            CurrentCooldown--;
+            if (CurrentCooldown <= 0)
+            {
+                // Trigger the effect and pass THIS entity as the source
+                cooldownHandler.OnCooldownZero(gridData, this, MyGridManager, placementManager);
+                
+                // Reset cooldown
+                CurrentCooldown = cooldownHandler.MaxCooldown;
+            }
+        }
+    }
+
     private void OnDestroy()
     {
         // Auto-free the tile if this entity is destroyed 

@@ -16,6 +16,8 @@ public class GridCombatLogic : MonoBehaviour
     
     private List<GameObject> _spawnedVisuals = new List<GameObject>();
 
+    private bool _isInitialized = false;
+    
     // We completely remove Awake() since we don't want GetComponent here anymore.
 
     /// <summary>
@@ -24,6 +26,10 @@ public class GridCombatLogic : MonoBehaviour
     /// </summary>
     public void InitializeGridLogic(TurretGridData gridData, GridUIManager manager, Turret linkedTurret) // UPDATED PARAMETERS
     {
+        if (_isInitialized) return;
+        
+        _isInitialized = true;
+        
         _currentGridData = gridData;
         _uiManager = manager; // Now we save the manager reference directly
         _activeTurret = linkedTurret; // Inject the reference
