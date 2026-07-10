@@ -18,11 +18,15 @@ public class TriangleReflectorData : GridData, ITrajectoryModifier, IEntityColli
 
     public Vector2Int GetRedirectedDirection(Vector2Int incomingDirection, Vector2Int itemFacingDirection)
     {
-        // Example math for a 45-degree mirror reflection. 
-        // You'll likely need to tweak this based on how your item rotation (itemFacingDirection) is structured.
-        if (incomingDirection == Vector2Int.up) return Vector2Int.right;
-        if (incomingDirection == Vector2Int.left) return Vector2Int.down;
+        // Map the 4 rotations of the triangle to the two types of 45-degree mirrors.
         
-        return -incomingDirection; // Default fallback
+        if (itemFacingDirection == Vector2Int.up || itemFacingDirection == Vector2Int.down)
+        {
+            return new Vector2Int(incomingDirection.y, incomingDirection.x);
+        }
+        else 
+        {
+            return new Vector2Int(-incomingDirection.y, -incomingDirection.x);
+        }
     }
 }

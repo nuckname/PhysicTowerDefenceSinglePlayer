@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23664b63f4dd103429eb380acdc1bb97, type: 3}
   m_Name: Triangle Reflector
   m_EditorClassIdentifier: Assembly-CSharp::TriangleReflectorData
-  gridName: 
-  girdArtwork: {fileID: 21300000, guid: a477b4fdd3469eb4d9f1111e62a94e48, type: 3}
+  gridName: Triangle
+  girdArtwork: {fileID: 21300000, guid: d980305c5bb8e6248b683c3138698b83, type: 3}
   baseDamage: 10
   allowedRotation: 1

@@ -70,11 +70,18 @@ public class GridCombatLogic : MonoBehaviour
 
     public void RecalculateBoard()
     {
+        // 1. CLEANUP: Instantly remove any entities that were destroyed 
+        _activeEntities.RemoveAll(item => item == null);
+
         ClearOldVisuals();
 
         List<StatModifier> allCalculatedModifiers = new List<StatModifier>();
         if (_currentGridData != null) _currentGridData.SavedCards.Clear();
         
+        // ===============================================
+        // LOOP 1: "Take a picture of the board"
+        // We MUST save every card to memory before doing ANY math!
+        // ===============================================
         foreach (GridEntity entity in _activeEntities)
         {
             if (_currentGridData != null)
@@ -83,7 +90,14 @@ public class GridCombatLogic : MonoBehaviour
                     entity.MyCardData, entity.CurrentGridPosition, entity.CurrentDirection
                 ));
             }
-            
+        }
+
+        // ===============================================
+        // LOOP 2: "Calculate Math and Draw Graphics"
+        // Now when the Laser asks "is there a Triangle here?", the answer is Yes!
+        // ===============================================
+        foreach (GridEntity entity in _activeEntities)
+        {
             List<StatModifier> pieceModifiers = entity.MyCardData.CalculateEffect(
                 entity.CurrentGridPosition, 
                 entity.CurrentDirection, 
@@ -94,8 +108,6 @@ public class GridCombatLogic : MonoBehaviour
 
             if (pieceModifiers != null) allCalculatedModifiers.AddRange(pieceModifiers);
 
-            // this hard crashes unity btw
-            
             entity.MyCardData.SpawnVisuals(
                 entity.CurrentGridPosition, 
                 entity.CurrentDirection, 
@@ -103,13 +115,11 @@ public class GridCombatLogic : MonoBehaviour
                 _uiManager,         
                 _spawnedVisuals     
             );
-            
-            
         }
 
         if (_activeTurret != null) _activeTurret.UpdateModifiers(allCalculatedModifiers);
     }
-
+    
     private void ClearOldVisuals()
     {
         foreach (GameObject visualSegment in _spawnedVisuals)
