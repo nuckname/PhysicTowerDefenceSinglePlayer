@@ -70,6 +70,15 @@ public class GridEntity : MonoBehaviour
         {
             movementScript.ResetMovementState();
         }
+        
+        if (MyGridManager != null)
+        {
+            MyGridCombatLogic = MyGridManager.GetComponent<GridCombatLogic>();
+            if (MyGridCombatLogic != null)
+            {
+                MyGridCombatLogic.RegisterEntity(this);
+            }
+        }
     }
     
     // Helper to tick down cooldowns cleanly on this specific instance

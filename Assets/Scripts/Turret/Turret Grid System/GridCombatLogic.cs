@@ -6,16 +6,15 @@ public class GridCombatLogic : MonoBehaviour
     [Header("Cooldown Settings")]
     public float timePerTick = 1.0f;
     private float _tickTimer = 0f;
-    private bool _isRoundActive = false; // Tracks if we should be ticking down
+    private bool _isRoundActive = false; 
 
-    // --- VARIABLES (This fixes your _placementManager error) ---
     private GridUIManager _uiManager;
     private GridPlacementManager _placementManager; 
     private Turret _activeTurret;
     
-    public List<GridEntity> ActiveEntities => _activeEntities;
+     public List<GridEntity> ActiveEntities => _activeEntities;
     
-    private List<GridEntity> _activeEntities = new List<GridEntity>(); 
+     [SerializeField] private List<GridEntity> _activeEntities = new List<GridEntity>(); 
     private TurretGridData _currentGridData;
     
     private List<GameObject> _spawnedVisuals = new List<GameObject>();
@@ -36,7 +35,6 @@ public class GridCombatLogic : MonoBehaviour
 
     private void Update()
     {
-        // Because this is INSIDE GridCombatLogic, we just check our own bool
         if (_isRoundActive)
         {
             _tickTimer += Time.deltaTime;
@@ -44,6 +42,7 @@ public class GridCombatLogic : MonoBehaviour
             if (_tickTimer >= timePerTick)
             {
                 // 1 Second has passed! Tick everything down.
+                Debug.unityLogger.Log("Tick");
                 TickGridCooldowns();
                 
                 // Reset the timer
@@ -95,6 +94,8 @@ public class GridCombatLogic : MonoBehaviour
 
             if (pieceModifiers != null) allCalculatedModifiers.AddRange(pieceModifiers);
 
+            // this hard crashes unity btw
+            
             entity.MyCardData.SpawnVisuals(
                 entity.CurrentGridPosition, 
                 entity.CurrentDirection, 
@@ -102,6 +103,8 @@ public class GridCombatLogic : MonoBehaviour
                 _uiManager,         
                 _spawnedVisuals     
             );
+            
+            
         }
 
         if (_activeTurret != null) _activeTurret.UpdateModifiers(allCalculatedModifiers);
