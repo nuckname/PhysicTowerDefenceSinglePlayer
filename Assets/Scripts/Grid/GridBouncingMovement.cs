@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(GridEntity))]
+[RequireComponent(typeof(GridBouncerReflectHandler))] // Automatically adds your new script!
 public class GridBouncingMovement : MonoBehaviour
 {
     [Header("Bounce Settings")]
@@ -10,18 +11,16 @@ public class GridBouncingMovement : MonoBehaviour
     
     private float _timer;
     private GridEntity _entity;
+    private GridBouncerReflectHandler _reflectHandler;
     private bool _isBouncing = false;
     
-    // We pass these in when launching so it knows what it is interacting with
     private Turret _linkedTurret;
     private TurretGridData _gridData;
 
-    /// <summary>
-    /// Call this immediately after spawning the entity to start the bouncing loop.
-    /// </summary>
     public void Launch(Turret linkedTurret, TurretGridData gridData)
     {
         _entity = GetComponent<GridEntity>();
+        _reflectHandler = GetComponent<GridBouncerReflectHandler>();
         _linkedTurret = linkedTurret;
         _gridData = gridData;
         
@@ -44,52 +43,83 @@ public class GridBouncingMovement : MonoBehaviour
     private void StepForward()
     {
         Vector2Int currentPos = _entity.CurrentGridPosition;
-        Vector2Int direction = _entity.CurrentDirection;
+        Vector2Int currentDir = _entity.CurrentDirection;
         GridUIManager uiManager = _entity.MyGridManager;
 
-        int nextX = currentPos.x + direction.x;
-        int nextY = currentPos.y + direction.y;
+        // Calculate where we WANT to go
+        int targetX = currentPos.x + currentDir.x;
+        int targetY = currentPos.y + currentDir.y;
+        Vector2Int targetPos = new Vector2Int(targetX, targetY);
 
         bool hitWallX = false;
         bool hitWallY = false;
         bool cornerHit = false;
+        
+        Vector2Int nextDir = currentDir;
+        Vector2Int newPos;
 
-        if (direction.x != 0 && (nextX < 0 || nextX >= uiManager.GridWidth || IsTileSolid(new Vector2Int(nextX, currentPos.y))))
-        {
-            hitWallX = true;
-            direction.x *= -1; 
-        }
+        // ==========================================
+        // 1. EXTRACTED LOGIC CALL
+        // Ask the new handler if we are entering a reflector
+        // ==========================================
+        bool enteringReflector = _reflectHandler.CheckForReflection(targetPos, currentDir, _gridData, out nextDir);
 
-        if (direction.y != 0 && (nextY < 0 || nextY >= uiManager.GridHeight || IsTileSolid(new Vector2Int(currentPos.x, nextY))))
+        // 2. Resolve Movement & Bouncing
+        if (enteringReflector)
         {
-            hitWallY = true;
-            direction.y *= -1; 
-        }
-
-        if (!hitWallX && !hitWallY && direction.x != 0 && direction.y != 0 && IsTileSolid(new Vector2Int(nextX, nextY)))
-        {
-            cornerHit = true;
-            direction.x *= -1;
-            direction.y *= -1;
-        }
-
-        // Notify the Card Data
-        // If we hit any wall or corner, tell the GridData so it can trigger its override effect!
-        if (hitWallX || hitWallY || cornerHit)
-        {
+            // Move INTO the triangle, and face the new direction ready for the next turn
+            newPos = targetPos;
+            
+            // Notify the Bouncer Card of the "bounce" so you gain your damage buffs!
             if (_entity.MyCardData is IWallBouncer bouncerCard)
             {
-                bouncerCard.OnWallBounce(currentPos, _gridData, uiManager, _linkedTurret);
+                bouncerCard.OnWallBounce(targetPos, _gridData, uiManager, _linkedTurret);
             }
         }
+        else
+        {
+            // Standard Wall Physics (Blocks, Boundaries, and flat backs of Triangles)
+            if (currentDir.x != 0 && (targetX < 0 || targetX >= uiManager.GridWidth || IsTileSolid(new Vector2Int(targetX, currentPos.y))))
+            {
+                hitWallX = true;
+                currentDir.x *= -1; 
+            }
 
-        // Update Entity Data
-        _entity.SetDirection(direction);
-        Vector2Int newPos = currentPos + direction;
+            if (currentDir.y != 0 && (targetY < 0 || targetY >= uiManager.GridHeight || IsTileSolid(new Vector2Int(currentPos.x, targetY))))
+            {
+                hitWallY = true;
+                currentDir.y *= -1; 
+            }
+
+            if (!hitWallX && !hitWallY && currentDir.x != 0 && currentDir.y != 0 && IsTileSolid(targetPos))
+            {
+                cornerHit = true;
+                currentDir.x *= -1;
+                currentDir.y *= -1;
+            }
+
+            if (hitWallX || hitWallY || cornerHit)
+            {
+                if (_entity.MyCardData is IWallBouncer bouncerCard)
+                {
+                    bouncerCard.OnWallBounce(currentPos, _gridData, uiManager, _linkedTurret);
+                }
+            }
+            
+            nextDir = currentDir;
+            newPos = currentPos + nextDir;
+        }
+
+        // Clamp safety: Prevents crashes if the player builds a trap that points out of bounds
+        newPos.x = Mathf.Clamp(newPos.x, 0, uiManager.GridWidth - 1);
+        newPos.y = Mathf.Clamp(newPos.y, 0, uiManager.GridHeight - 1);
+
+        // 3. Apply state
+        _entity.SetDirection(nextDir);
         _entity.SetGridPosition(newPos);
 
-        Transform targetTile = uiManager.GetTileTransform(newPos);
-        if (targetTile != null) transform.SetParent(targetTile, false);
+        Transform targetTileUI = uiManager.GetTileTransform(newPos);
+        if (targetTileUI != null) transform.SetParent(targetTileUI, false);
 
         if (CheckCollision(uiManager, newPos)) return;
 
@@ -104,43 +134,27 @@ public class GridBouncingMovement : MonoBehaviour
             if (landedTile.OccupyingEntity.MyCardData is IEntityCollision collidable)
             {
                 collidable.OnHitByEntity(_entity, landedTile.OccupyingEntity, _linkedTurret);
-
-                // Check if the ball was destroyed by the collision!
                 if (this == null || gameObject == null) return true;
             }
         }
-
-        // No Collision
         return false;
     }
 
-    /// <summary>
-    /// Checks if a grid coordinate has an object on it, treating it as a wall to bounce off of.
-    /// </summary>
-    /// <summary>
-    /// Checks if a grid coordinate has an object on it, treating it as a wall to bounce off of.
-    /// </summary>
     private bool IsTileSolid(Vector2Int pos)
     {
-        // First check if another card or piece is physically occupying this tile on the board
         Tile tile = _entity.MyGridManager.GetTileAt(pos);
         if (tile != null && tile.IsOccupied)
         {
-            // Ask the occupying entity if it allows pass-through (like a laser)
             if (tile.OccupyingEntity != null && tile.OccupyingEntity.MyCardData is IEntityCollision collidable)
             {
-                // If it's a laser, IsSolidWall() returns false, meaning the tile is NOT solid to the bouncer!
                 return collidable.IsSolidWall(); 
             }
-            
-            // If it doesn't implement our collision interface, treat it as a solid wall by default
             return true;
         }
 
-        // Then check the underlying grid data state for permanent walls or holes
         if (_gridData.TileStates.TryGetValue(pos, out int stateValue))
         {
-            return stateValue != 0; // Assuming 0 is empty space
+            return stateValue != 0; 
         }
         
         return false;
@@ -148,7 +162,6 @@ public class GridBouncingMovement : MonoBehaviour
 
     private void TriggerTileEffect()
     {
-        // Ask the card data to calculate its modifiers for this single tile footprint
         List<StatModifier> hitModifiers = _entity.MyCardData.CalculateEffect(
             _entity.CurrentGridPosition, 
             _entity.CurrentDirection, 
@@ -159,10 +172,6 @@ public class GridBouncingMovement : MonoBehaviour
 
         if (hitModifiers != null && _linkedTurret != null)
         {
-            // Send the modifiers directly to the turret.
-            // Note: Because this happens instantly every tick, you'll want the Turret to process 
-            // this as an "instant application" (like instantly granting +1 ammo or dealing 5 damage) 
-            // rather than a permanent passive stat override.
             _linkedTurret.UpdateModifiers(hitModifiers); 
         }
     }
