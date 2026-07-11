@@ -5,11 +5,6 @@ using System.Collections.Generic;
 [RequireComponent(typeof(GridBouncerReflectHandler))] // Automatically adds your new script!
 public class GridBouncingMovement : MonoBehaviour
 {
-    [Header("Bounce Settings")]
-    [Tooltip("How many seconds between each grid jump.")]
-    public float MoveInterval = 0.5f; 
-    
-    private float _timer;
     private GridEntity _entity;
     private GridBouncerReflectHandler _reflectHandler;
     private bool _isBouncing = false;
@@ -25,23 +20,13 @@ public class GridBouncingMovement : MonoBehaviour
         _gridData = gridData;
         
         _isBouncing = true;
-        _timer = MoveInterval;
     }
 
-    private void Update()
+    // Changed to public so KineticBouncerData can trigger it on cooldown
+    public void StepForward()
     {
         if (!_isBouncing) return;
 
-        _timer -= Time.deltaTime;
-        if (_timer <= 0f)
-        {
-            StepForward();
-            _timer = MoveInterval;
-        }
-    }
-
-    private void StepForward()
-    {
         Vector2Int currentPos = _entity.CurrentGridPosition;
         Vector2Int currentDir = _entity.CurrentDirection;
         GridUIManager uiManager = _entity.MyGridManager;
@@ -59,12 +44,12 @@ public class GridBouncingMovement : MonoBehaviour
         Vector2Int newPos;
 
         // ==========================================
-        // 1. EXTRACTED LOGIC CALL
+        // EXTRACTED LOGIC CALL
         // Ask the new handler if we are entering a reflector
         // ==========================================
         bool enteringReflector = _reflectHandler.CheckForReflection(targetPos, currentDir, _gridData, out nextDir);
 
-        // 2. Resolve Movement & Bouncing
+        // Resolve Movement & Bouncing
         if (enteringReflector)
         {
             // Move INTO the triangle, and face the new direction ready for the next turn
@@ -114,7 +99,7 @@ public class GridBouncingMovement : MonoBehaviour
         newPos.x = Mathf.Clamp(newPos.x, 0, uiManager.GridWidth - 1);
         newPos.y = Mathf.Clamp(newPos.y, 0, uiManager.GridHeight - 1);
 
-        // 3. Apply state
+        // Apply state
         _entity.SetDirection(nextDir);
         _entity.SetGridPosition(newPos);
 

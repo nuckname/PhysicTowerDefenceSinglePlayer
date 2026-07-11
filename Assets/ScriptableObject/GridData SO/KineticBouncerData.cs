@@ -2,11 +2,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Kinetic Bouncer", menuName = "Grid System/Cards/Kinetic Bouncer")]
-public class KineticBouncerData : GridData, IWallBouncer, IRoundListener
+public class KineticBouncerData : GridData, IWallBouncer, IRoundListener, ICooldownHandler
 {
     [Header("Bounce Specifics")]
     [Tooltip("How much damage to grant the turret every time this hits a wall.")]
     public int DamagePerBounce = 3;
+
+    [Header("Cooldown Settings")]
+    [Tooltip("How many turns/ticks it takes for the bouncer to move.")]
+    public int MoveCooldown = 1;
 
     // This is the standard effect it applies while traveling over the grid
     public override List<StatModifier> CalculateEffect(Vector2Int startPos, Vector2Int direction, TurretGridData gridData, int gridWidth, int gridHeight)
@@ -53,5 +57,26 @@ public class KineticBouncerData : GridData, IWallBouncer, IRoundListener
     public void OnRoundEnd(GridPlacementManager placementManager, TurretGridData gridData, GridEntity sourceEntity)
     {
         // Added to satisfy the IRoundListener contract.
+    }
+
+    // Satisfying the ICooldownHandler contract natively
+    public int MaxCooldown => MoveCooldown;
+    
+    // Auto-property to track the current state for this specific card
+    public int CurrentCooldown { get; set; }
+
+    public void OnCooldownZero(TurretGridData gridData, GridEntity sourceEntity, GridUIManager uiManager, GridPlacementManager placementManager)
+    {
+        // Grab the movement script from the active entity on the board and command it to step forward
+        GridBouncingMovement movementScript = sourceEntity.GetComponent<GridBouncingMovement>();
+        
+        if (movementScript != null)
+        {
+            movementScript.StepForward();
+        }
+        else
+        {
+            Debug.LogWarning("Bouncer entity triggered OnCooldownZero but has no GridBouncingMovement attached!");
+        }
     }
 }

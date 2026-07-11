@@ -154,8 +154,12 @@ public class GridUIManager : MonoBehaviour
     private void HandleRoundStarted()
     {
         if (_gridCombatLogic == null) return;
-
-        foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
+        if(_gridCombatLogic.ActiveEntities == null) return;
+        
+        // We iterate over a copy of the list so spawning new items doesn't crash the enumerator
+        List<GridEntity> entitiesCopy = new List<GridEntity>(_gridCombatLogic.ActiveEntities);
+        
+        foreach (GridEntity entity in entitiesCopy)
         {
             if(entity.MyCardData is IRoundListener iRoundListener)
             {
@@ -174,9 +178,12 @@ public class GridUIManager : MonoBehaviour
         }
         _activeBouncers.Clear();
 
-        if (_gridCombatLogic != null)
+        if (_gridCombatLogic != null && _gridCombatLogic.ActiveEntities != null)
         {
-            foreach (GridEntity entity in _gridCombatLogic.ActiveEntities)
+            // We iterate over a copy here too, just in case OnRoundEnd modifies the list
+            List<GridEntity> entitiesCopy = new List<GridEntity>(_gridCombatLogic.ActiveEntities);
+            
+            foreach (GridEntity entity in entitiesCopy)
             {
                 if(entity.MyCardData is IRoundListener iRoundListener)
                 {

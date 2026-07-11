@@ -15,4 +15,6 @@ MonoBehaviour:
   gridName: Ball Bouncing
   girdArtwork: {fileID: 21300000, guid: f55e5fd19f0ad4c43a4d4d713e877f80, type: 3}
   baseDamage: 10
+  allowedRotation: 0
   DamagePerBounce: 3
+  MoveCooldown: 3
